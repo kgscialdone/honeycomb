@@ -14,8 +14,11 @@ requires "nim >= 1.6.0"
 
 # Tasks
 
+import strutils
+import sequtils
+
 task test, "Run honeycomb test cases":
-  exec "nim r tests/test.nim"
+  exec "nim r tests/test.nim " & commandLineParams[3..^1].mapIt("\"$1\"" % it).join(" ")
 
 task gendocs, "Generate documentation":
   exec "nimble doc2 -o:docs/ src/honeycomb.nim"
