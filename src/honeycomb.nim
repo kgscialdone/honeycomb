@@ -302,6 +302,7 @@ template optional*[T](a: Parser[T]): Parser[seq[T]] =
   a.atMost(1)
 
 template flatten*[T](p: Parser[seq[seq[T]]]): Parser[seq[T]] =
+  ## Remove one level of nested `seq`s from a parser.
   p.map(x => (case x.len:
     of 0: newSeq[T]()
     else: x.foldl(a & b)))

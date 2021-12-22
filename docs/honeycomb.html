@@ -109,7 +109,7 @@ window.addEventListener('DOMContentLoaded', main);
   of success:
     value*: T                ## The value of the successful parse.
   of failure:
-    error*: string           ## The error message of the failed parse.
+    expected*: seq[string]   ## The error message of the failed parse.
   tail*: string              ## The remaining unparsed input, or all input when failed.
   fromInput*: string         ## The input from which this result was generated.">ParseResult</a></li>
   <li><a class="reference" href="#ParseResultKind"
@@ -142,6 +142,8 @@ window.addEventListener('DOMContentLoaded', main);
       <ul class="simple nested-toc-section">&
       <li><a class="reference" href="#%26%2CParser%5BT%5D%2CParser%5BT%5D"
     title="`&amp;`[T](a, b: Parser[T]): Parser[seq[T]]">`&amp;`[T](a, b: Parser[T]): Parser[seq[T]]</a></li>
+  <li><a class="reference" href="#%26%2CParser%5Bseq%5BT%5D%5D%2CParser%5Bseq%5BT%5D%5D"
+    title="`&amp;`[T](a: Parser[seq[T]]; b: Parser[seq[T]]): Parser[seq[T]]">`&amp;`[T](a: Parser[seq[T]]; b: Parser[seq[T]]): Parser[seq[T]]</a></li>
   <li><a class="reference" href="#%26%2CParser%5Bseq%5BT%5D%5D%2CParser%5BT%5D"
     title="`&amp;`[T](a: Parser[seq[T]]; b: Parser[T]): Parser[seq[T]]">`&amp;`[T](a: Parser[seq[T]]; b: Parser[T]): Parser[seq[T]]</a></li>
   <li><a class="reference" href="#%26%2CParser%5BT%5D%2CParser%5Bseq%5BT%5D%5D"
@@ -149,10 +151,10 @@ window.addEventListener('DOMContentLoaded', main);
 
   </ul>
   <ul class="simple nested-toc-section">*
-      <li><a class="reference" href="#%2A%2CParser%5BT%5D%2CHSlice%5Bint%2Cint%5D"
-    title="`*`[T](a: Parser[T]; n: HSlice[int, int]): Parser[seq[T]]">`*`[T](a: Parser[T]; n: HSlice[int, int]): Parser[seq[T]]</a></li>
-  <li><a class="reference" href="#%2A%2CParser%5BT%5D%2Cint"
+      <li><a class="reference" href="#%2A%2CParser%5BT%5D%2Cint"
     title="`*`[T](a: Parser[T]; n: int): Parser[seq[T]]">`*`[T](a: Parser[T]; n: int): Parser[seq[T]]</a></li>
+  <li><a class="reference" href="#%2A%2CParser%5BT%5D%2CSlice%5Bint%5D"
+    title="`*`[T](a: Parser[T]; n: Slice[int]): Parser[seq[T]]">`*`[T](a: Parser[T]; n: Slice[int]): Parser[seq[T]]</a></li>
 
   </ul>
   <ul class="simple nested-toc-section"><<
@@ -172,9 +174,9 @@ window.addEventListener('DOMContentLoaded', main);
     title="c(expect: string): Parser[char]">c(expect: string): Parser[char]</a></li>
 
   </ul>
-  <ul class="simple nested-toc-section">many
-      <li><a class="reference" href="#many%2CParser%5BT%5D"
-    title="many[T](a: Parser[T]): Parser[seq[T]]">many[T](a: Parser[T]): Parser[seq[T]]</a></li>
+  <ul class="simple nested-toc-section">error
+      <li><a class="reference" href="#error%2CParseResult%5BT%5D"
+    title="error[T](result1: ParseResult[T]): string">error[T](result1: ParseResult[T]): string</a></li>
 
   </ul>
   <ul class="simple nested-toc-section">map
@@ -251,8 +253,13 @@ window.addEventListener('DOMContentLoaded', main);
 
   </ul>
   <ul class="simple nested-toc-section">fail
-      <li><a class="reference" href="#fail.t%2Cstring%2Cstring"
-    title="fail[T](inputIn, errorIn: string): ParseResult[T]">fail[T](inputIn, errorIn: string): ParseResult[T]</a></li>
+      <li><a class="reference" href="#fail.t%2Cstring%2Cseq%5Bstring%5D"
+    title="fail[T](inputIn: string; expectedIn: seq[string]): ParseResult[T]">fail[T](inputIn: string; expectedIn: seq[string]): ParseResult[T]</a></li>
+
+  </ul>
+  <ul class="simple nested-toc-section">flatten
+      <li><a class="reference" href="#flatten.t%2CParser%5Bseq%5Bseq%5BT%5D%5D%5D"
+    title="flatten[T](p: Parser[seq[seq[T]]]): Parser[seq[T]]">flatten[T](p: Parser[seq[seq[T]]]): Parser[seq[T]]</a></li>
 
   </ul>
   <ul class="simple nested-toc-section">join
@@ -262,9 +269,19 @@ window.addEventListener('DOMContentLoaded', main);
     title="join(a: Parser[seq[string or char]]; delim: string or char): Parser[string]">join(a: Parser[seq[string or char]]; delim: string or char): Parser[string]</a></li>
 
   </ul>
+  <ul class="simple nested-toc-section">many
+      <li><a class="reference" href="#many.t%2CParser%5BT%5D"
+    title="many[T](a: Parser[T]): Parser[seq[T]]">many[T](a: Parser[T]): Parser[seq[T]]</a></li>
+
+  </ul>
   <ul class="simple nested-toc-section">oneOf
       <li><a class="reference" href="#oneOf.t%2CParser%5BT%5D%2CParser%5BT%5D%2Cvarargs%5BParser%5BT%5D%5D"
     title="oneOf[T](p1, p2: Parser[T]; ps: varargs[Parser[T]]): Parser[T]">oneOf[T](p1, p2: Parser[T]; ps: varargs[Parser[T]]): Parser[T]</a></li>
+
+  </ul>
+  <ul class="simple nested-toc-section">optional
+      <li><a class="reference" href="#optional.t%2CParser%5BT%5D"
+    title="optional[T](a: Parser[T]): Parser[seq[T]]">optional[T](a: Parser[T]): Parser[seq[T]]</a></li>
 
   </ul>
   <ul class="simple nested-toc-section">result
@@ -326,7 +343,7 @@ window.addEventListener('DOMContentLoaded', main);
   <span class="Keyword">of</span> <span class="Identifier">success</span><span class="Other">:</span>
     <span class="Identifier">value</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">T</span>                <span class="Comment">## The value of the successful parse.</span>
   <span class="Keyword">of</span> <span class="Identifier">failure</span><span class="Other">:</span>
-    <span class="Identifier">error</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>           <span class="Comment">## The error message of the failed parse.</span>
+    <span class="Identifier">expected</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span>   <span class="Comment">## The error message of the failed parse.</span>
   <span class="Identifier">tail</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>              <span class="Comment">## The remaining unparsed input, or all input when failed.</span>
   <span class="Identifier">fromInput</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>         <span class="Comment">## The input from which this result was generated.</span>
   </pre></dt>
@@ -415,6 +432,14 @@ A parser that expects at least one whitespace character.
 
 </dd>
 </div>
+<div id="&,Parser[seq[T]],Parser[seq[T]]">
+<dt><pre><span class="Keyword">func</span> <a href="#%26%2CParser%5Bseq%5BT%5D%5D%2CParser%5Bseq%5BT%5D%5D"><span class="Identifier">`&amp;`</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">b</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span></pre></dt>
+<dd>
+
+Same as <a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a>, but merges <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt>s when both parsers already are.
+
+</dd>
+</div>
 <div id="&,Parser[seq[T]],Parser[T]">
 <dt><pre><span class="Keyword">func</span> <a href="#%26%2CParser%5Bseq%5BT%5D%5D%2CParser%5BT%5D"><span class="Identifier">`&amp;`</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">b</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span></pre></dt>
 <dd>
@@ -431,26 +456,27 @@ Same as <a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a
 
 </dd>
 </div>
-<div id="*,Parser[T],HSlice[int,int]">
-<dt><pre><span class="Keyword">func</span> <a href="#%2A%2CParser%5BT%5D%2CHSlice%5Bint%2Cint%5D"><span class="Identifier">`*`</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">n</span><span class="Other">:</span> <span class="Identifier">HSlice</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">,</span> <span class="Identifier">int</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span></pre></dt>
+<div id="*,Parser[T],int">
+<dt><pre><span class="Keyword">func</span> <a href="#%2A%2CParser%5BT%5D%2Cint"><span class="Identifier">`*`</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">n</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span></pre></dt>
 <dd>
 
-<p>Expects the parser a number of times in the given range, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
+<p>Expects the parser a given number of times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
 <p>See also:</p>
 <ul class="simple"><li><a class="reference external" href="#times.t,Parser,auto">times</a></li>
-<li><a class="reference external" href="#many,Parser[T]">many</a></li>
+<li><a class="reference external" href="#many.t,Parser[T]">many</a></li>
 <li><a class="reference external" href="#atLeast.t,Parser[T],int">atLeast</a></li>
 <li><a class="reference external" href="#atMost.t,Parser[T],int">atMost</a></li>
+<li><a class="reference external" href="#optional.t,Parser[T]">optional</a></li>
 </ul>
 
 
 </dd>
 </div>
-<div id="*,Parser[T],int">
-<dt><pre><span class="Keyword">func</span> <a href="#%2A%2CParser%5BT%5D%2Cint"><span class="Identifier">`*`</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">n</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span></pre></dt>
+<div id="*,Parser[T],Slice[int]">
+<dt><pre><span class="Keyword">func</span> <a href="#%2A%2CParser%5BT%5D%2CSlice%5Bint%5D"><span class="Identifier">`*`</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">n</span><span class="Other">:</span> <span class="Identifier">Slice</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span></pre></dt>
 <dd>
 
-Expects the parser a given number of times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.
+Expects the parser a number of times in the given range, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.
 
 </dd>
 </div>
@@ -513,18 +539,11 @@ Creates a parser matching any one character from the given string.
 
 </dd>
 </div>
-<div id="many,Parser[T]">
-<dt><pre><span class="Keyword">func</span> <a href="#many%2CParser%5BT%5D"><span class="Identifier">many</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span></pre></dt>
+<div id="error,ParseResult[T]">
+<dt><pre><span class="Keyword">proc</span> <a href="#error%2CParseResult%5BT%5D"><span class="Identifier">error</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">result1</span><span class="Other">:</span> <a href="honeycomb.html#ParseResult"><span class="Identifier">ParseResult</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span></pre></dt>
 <dd>
 
-<p>Expects the parser 0 or more times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
-<p>See also:</p>
-<ul class="simple"><li><a class="reference external" href="#*,Parser[T],HSlice[int,int]">*</a></li>
-<li><a class="reference external" href="#times.t,Parser,auto">times</a></li>
-<li><a class="reference external" href="#atLeast.t,Parser[T],int">atLeast</a></li>
-<li><a class="reference external" href="#atMost.t,Parser[T],int">atMost</a></li>
-</ul>
-
+Stringify the <tt class="docutils literal"><span class="pre"><span class="Identifier">expected</span></span></tt> from a failed <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt>. Returns an empty string if passed a successful result.
 
 </dd>
 </div>
@@ -605,10 +624,11 @@ Implicitly converts <tt class="docutils literal"><span class="pre"><span class="
 
 <p>Expects the parser <tt class="docutils literal"><span class="pre"><span class="Identifier">n</span></span></tt> or more times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
 <p>See also:</p>
-<ul class="simple"><li><a class="reference external" href="#*,Parser[T],HSlice[int,int]">*</a></li>
+<ul class="simple"><li><a class="reference external" href="#*,Parser[T],Slice[int]">*</a></li>
 <li><a class="reference external" href="#times.t,Parser,auto">times</a></li>
-<li><a class="reference external" href="#many,Parser[T]">many</a></li>
+<li><a class="reference external" href="#many.t,Parser[T]">many</a></li>
 <li><a class="reference external" href="#atMost.t,Parser[T],int">atMost</a></li>
+<li><a class="reference external" href="#optional.t,Parser[T]">optional</a></li>
 </ul>
 
 
@@ -620,10 +640,11 @@ Implicitly converts <tt class="docutils literal"><span class="pre"><span class="
 
 <p>Expects the parser <tt class="docutils literal"><span class="pre"><span class="Identifier">n</span></span></tt> or fewer times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
 <p>See also:</p>
-<ul class="simple"><li><a class="reference external" href="#*,Parser[T],HSlice[int,int]">*</a></li>
+<ul class="simple"><li><a class="reference external" href="#*,Parser[T],Slice[int]">*</a></li>
 <li><a class="reference external" href="#times.t,Parser,auto">times</a></li>
-<li><a class="reference external" href="#many,Parser[T]">many</a></li>
+<li><a class="reference external" href="#many.t,Parser[T]">many</a></li>
 <li><a class="reference external" href="#atLeast.t,Parser[T],int">atLeast</a></li>
+<li><a class="reference external" href="#optional.t,Parser[T]">optional</a></li>
 </ul>
 
 
@@ -664,8 +685,8 @@ Same as <a class="reference external" href="#createParserTo.t,typedesc,untyped">
 
 </dd>
 </div>
-<div id="fail.t,string,string">
-<dt><pre><span class="Keyword">template</span> <a href="#fail.t%2Cstring%2Cstring"><span class="Identifier">fail</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">inputIn</span><span class="Other">,</span> <span class="Identifier">errorIn</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#ParseResult"><span class="Identifier">ParseResult</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
+<div id="fail.t,string,seq[string]">
+<dt><pre><span class="Keyword">template</span> <a href="#fail.t%2Cstring%2Cseq%5Bstring%5D"><span class="Identifier">fail</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">inputIn</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">expectedIn</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#ParseResult"><span class="Identifier">ParseResult</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
 <dd>
 
 <p>Creates a failed <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt>. Requires <tt class="docutils literal"><span class="pre"><span class="Identifier">T</span></span></tt> to be explicitly specified, except inside of <tt class="docutils literal"><span class="pre"><span class="Identifier">createParserTo</span></span></tt> in some cases.</p>
@@ -675,6 +696,14 @@ Same as <a class="reference external" href="#createParserTo.t,typedesc,untyped">
 <li><a class="reference external" href="#createParser.t,untyped">createParser</a></li>
 </ul>
 
+
+</dd>
+</div>
+<div id="flatten.t,Parser[seq[seq[T]]]">
+<dt><pre><span class="Keyword">template</span> <a href="#flatten.t%2CParser%5Bseq%5Bseq%5BT%5D%5D%5D"><span class="Identifier">flatten</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span></pre></dt>
+<dd>
+
+Remove one level of nested <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt>s from a parser.
 
 </dd>
 </div>
@@ -695,6 +724,22 @@ Joins a <tt class="docutils literal"><span class="pre"><span class="Identifier">
 
 </dd>
 </div>
+<div id="many.t,Parser[T]">
+<dt><pre><span class="Keyword">template</span> <a href="#many.t%2CParser%5BT%5D"><span class="Identifier">many</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span></pre></dt>
+<dd>
+
+<p>Expects the parser 0 or more times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
+<p>See also:</p>
+<ul class="simple"><li><a class="reference external" href="#*,Parser[T],Slice[int]">*</a></li>
+<li><a class="reference external" href="#times.t,Parser,auto">times</a></li>
+<li><a class="reference external" href="#atLeast.t,Parser[T],int">atLeast</a></li>
+<li><a class="reference external" href="#atMost.t,Parser[T],int">atMost</a></li>
+<li><a class="reference external" href="#optional.t,Parser[T]">optional</a></li>
+</ul>
+
+
+</dd>
+</div>
 <div id="oneOf.t,Parser[T],Parser[T],varargs[Parser[T]]">
 <dt><pre><span class="Keyword">template</span> <a href="#oneOf.t%2CParser%5BT%5D%2CParser%5BT%5D%2Cvarargs%5BParser%5BT%5D%5D"><span class="Identifier">oneOf</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">p1</span><span class="Other">,</span> <span class="Identifier">p2</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">ps</span><span class="Other">:</span> <span class="Identifier">varargs</span><span class="Other">[</span><a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
 <dd>
@@ -702,6 +747,22 @@ Joins a <tt class="docutils literal"><span class="pre"><span class="Identifier">
 <p>Succeeds if any of the passed parsers succeed, attempting them from left to right.</p>
 <p>See also:</p>
 <ul class="simple"><li><a class="reference external" href="#|,Parser[T],Parser[T]">|</a></li>
+</ul>
+
+
+</dd>
+</div>
+<div id="optional.t,Parser[T]">
+<dt><pre><span class="Keyword">template</span> <a href="#optional.t%2CParser%5BT%5D"><span class="Identifier">optional</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">]</span></pre></dt>
+<dd>
+
+<p>Expects the parser 0 or 1 times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
+<p>See also:</p>
+<ul class="simple"><li><a class="reference external" href="#*,Parser[T],Slice[int]">*</a></li>
+<li><a class="reference external" href="#times.t,Parser,auto">times</a></li>
+<li><a class="reference external" href="#many.t,Parser[T]">many</a></li>
+<li><a class="reference external" href="#atLeast.t,Parser[T],int">atLeast</a></li>
+<li><a class="reference external" href="#atMost.t,Parser[T],int">atMost</a></li>
 </ul>
 
 
@@ -753,7 +814,7 @@ Textual alternative to <a class="reference external" href="#&gt;&gt;,Parser[T],P
 <dt><pre><span class="Keyword">template</span> <a href="#times.t%2CParser%2Cauto"><span class="Identifier">times</span></a><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">;</span> <span class="Identifier">n</span><span class="Other">:</span> <span class="Identifier">auto</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">auto</span></pre></dt>
 <dd>
 
-Textual alternative to <a class="reference external" href="#*,Parser[T],HSlice[int,int]">*</a>.
+Textual alternative to <a class="reference external" href="#*,Parser[T],Slice[int]">*</a>.
 
 </dd>
 </div>
@@ -767,7 +828,7 @@ Textual alternative to <a class="reference external" href="#*,Parser[T],HSlice[i
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2021-12-21 00:45:42 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2021-12-22 04:00:26 UTC</small>
       </div>
     </div>
   </div>
