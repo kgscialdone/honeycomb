@@ -1,5 +1,6 @@
 
 import strutils
+import sequtils
 import re
 import macros
 
@@ -21,11 +22,11 @@ type
     ## The result of a parser run.
 
     case kind*: ParseResultKind
-    of success: value*: T         ## The value of the successful parse.
-    of failure: error*: string    ## The error message of the failed parse.
+    of success: value*: T                 ## The value of the successful parse.
+    of failure: expected*: seq[string]    ## The error message of the failed parse.
 
-    tail*: string                 ## The remaining unparsed input, or all input when failed.
-    fromInput*: string            ## The input from which this result was generated.
+    tail*: string                         ## The remaining unparsed input, or all input when failed.
+    fromInput*: string                    ## The input from which this result was generated.
 
 
 # === Combinator Definition Utilities ===
@@ -39,14 +40,23 @@ template succeed*[T](inputIn: string, valueIn: T, tailIn: string): ParseResult[T
   ## - [createParser](#createParser.t,untyped)
   ParseResult[T](kind: success, value: valueIn, tail: tailIn, fromInput: inputIn)
 
-template fail*[T](inputIn, errorIn: string): ParseResult[T] =
+template fail*[T](inputIn: string, expectedIn: seq[string]): ParseResult[T] =
   ## Creates a failed `ParseResult`. Requires `T` to be explicitly specified, except inside of `createParserTo` in some cases.
   ##
   ## See also:
   ## - [succeed](#succeed.t,string,T,string)
   ## - [createParserTo](#createParserTo.t,typedesc,untyped)
   ## - [createParser](#createParser.t,untyped)
-  ParseResult[T](kind: failure, error: errorIn, tail: inputIn, fromInput: inputIn)
+  ParseResult[T](kind: failure, expected: expectedIn, tail: inputIn, fromInput: inputIn)
+
+template fail[T](inputIn: string, expectedIn: seq[string], tailIn: string): ParseResult[T] =
+  ## Creates a failed `ParseResult`. Requires `T` to be explicitly specified, except inside of `createParserTo` in some cases.
+  ##
+  ## See also:
+  ## - [succeed](#succeed.t,string,T,string)
+  ## - [createParserTo](#createParserTo.t,typedesc,untyped)
+  ## - [createParser](#createParser.t,untyped)
+  ParseResult[T](kind: failure, expected: expectedIn, tail: tailIn, fromInput: inputIn)
 
 template createParserTo*(T: typedesc, parser_body: untyped): Parser[T] =
   ## Convenience method for creating a custom `Parser`. Expects the parser's wrapped type as a parameter (not a generic!) and a block which will form the body of the parser.
@@ -57,9 +67,8 @@ template createParserTo*(T: typedesc, parser_body: untyped): Parser[T] =
   ## - [succeed](#succeed.t,string,T,string)
   ## - [fail](#fail.t,string,string)
   ## - [createParser](#createParser.t,untyped)
-
   (proc(input {.inject.}: string): ParseResult[T] =
-    let fail {.inject, used.} = (i,e: string) => fail[T](i,e)
+    let fail {.inject, used.} = (i: string, e: seq[string]) => fail[T](i,e)
     parser_body)
 
 template createParser*(parser_body: untyped): Parser[string] =
@@ -70,14 +79,26 @@ macro applyParser*(parser, input, failType: untyped) =
   ## Applies the given parser, evaluating to its result if successful or returning from the containing function if failed.
   ##
   ## This is primarily a tool for simplifying the creation of custom combinators, and should only be used if you know what you're doing. It is only designed to function properly in the context of a block passed to [createParserTo](#createParserTo.t,typedesc,untyped), and will raise a compile warning if used outside of this module.
-
   result = quote do:
     block:
       when instantiationInfo().filename != "honeycomb.nim":
         {.warning: "applyParser is designed for internal use, and should only be used if you know what you're doing.".}
       let temp = `parser`(`input`)
-      if temp.kind == failure: return fail[`failType`](input, temp.error)
+      if temp.kind == failure: return fail[`failType`](input, temp.expected, temp.tail)
       temp
+
+proc error*[T](result1: ParseResult[T]): string =
+  ## Stringify the `expected` from a failed `ParseResult`. Returns an empty string if passed a successful result.
+  if result1.kind == success: return ""
+  let 
+    expected = result1.expected.deduplicate
+    prior    = result1.fromInput[0..^result1.tail.len+1]
+    lineNum  = prior.countLines
+    lines    = prior.splitLines
+    colmNum  = lines[lines.len-1].len+1
+  case expected.len:
+    of 1: return "[$1:$2] Expected $3" % [$lineNum, $colmNum, expected[0]]
+    else: return "[$1:$2] Expected one of $3" % [$lineNum, $colmNum, expected.join(", ")]
 
 
 # === Core Parsers ===
@@ -90,7 +111,7 @@ func s*(expect: string): Parser[string] =
   ## - [regex](#regex,string)
   createParser:
     if input.startsWith(expect): return succeed(input, expect, input[expect.len..^1])
-    fail(input, "Expected '$1'" % expect)
+    fail(input, @["'$1'" % expect])
 
 func c*(expect: char): Parser[char] = 
   ## Creates a parser matching exactly the given character.
@@ -100,13 +121,13 @@ func c*(expect: char): Parser[char] =
   ## - [regex](#regex,string)
   createParserTo(char):
     if input.len > 0 and input[0] == expect: return succeed(input, expect, input[1..^1])
-    fail(input, "Expected '$1'" % $expect)
+    fail(input, @["'$1'" % $expect])
 
 func c*(expect: string): Parser[char] = 
   ## Creates a parser matching any one character from the given string.
   createParserTo(char):
     if input.len > 0 and input[0] in expect: return succeed(input, input[0], input[1..^1])
-    fail(input, "Expected one of '$1'" % $expect)
+    fail(input, @["character from '$1'" % $expect])
 
 func regex*(expect: string): Parser[string] = 
   ## Creates a parser matching the given regex. The regex must match from the start of the input.
@@ -117,30 +138,45 @@ func regex*(expect: string): Parser[string] =
   let expreg = expect.re
   createParser:
     let bounds = input.findBounds(expreg)
-    if bounds[0] != 0: return fail(input, "Expected '$1'" % $expect)
+    if bounds[0] != 0: return fail(input, @["'$1'" % $expect])
     succeed(input, input[0..bounds[1]], input[bounds[1]+1..^1])
 
 
 # === Combinators ===
+
+func map*[T,U](a: Parser[T], fn: proc(x: T): U): Parser[U] = 
+  ## If the parser is successful, calls `fn` on the parsed value and succeeds with its return value.
+  ##
+  ## See also:
+  ## - [result](#result.t,Parser,T)
+  createParserTo(U):
+    let result1 = applyParser(a, input, U)
+    return succeed(input, fn(result1.value), result1.tail)
+
+template result*[T](a: Parser, r: T): Parser[T] = 
+  ## If the parser is successful, succeeds with the given `r` as value.
+  ##
+  ## See also:
+  ## - [map](#map,Parser[T],proc(T))
+  a.map(x => r)
 
 func `|`*[T](a, b: Parser[T]): Parser[T] = 
   ## Succeeds if either parser succeeds, attempting them from left to right.
   ## 
   ## See also:
   ## - [oneOf](#oneOf.t,Parser[T],Parser[T],varargs[Parser[T]])
-
   createParserTo(T):
     let result1 = a(input)
-    case result1.kind:
-      of success: return result1
-      of failure: return b(input)
+    if result1.kind == success: return result1
+    let result2 = b(input)
+    if result2.kind == success: return result2
+    fail[T](input, result1.expected & result2.expected)
 
 func `&`*[T](a, b: Parser[T]): Parser[seq[T]] =
   ## Expects each parser in sequence from left to right, creating a `seq` of their results.
   ## 
   ## See also:
   ## - [chain](#chain.t,Parser[T],Parser[T],varargs[Parser[T]])
-
   createParserTo(seq[T]):
     let result1 = applyParser(a, input, seq[T])
     let result2 = applyParser(b, result1.tail, seq[T])
@@ -160,13 +196,19 @@ func `&`*[T](a: Parser[T], b: Parser[seq[T]]): Parser[seq[T]] =
     let result2 = applyParser(b, result1.tail, seq[T])
     return succeed(input, @[result1.value] & result2.value, result2.tail)
 
+func `&`*[T](a: Parser[seq[T]], b: Parser[seq[T]]): Parser[seq[T]] =
+  ## Same as [&](#&,Parser[T],Parser[T]), but merges `seq`s when both parsers already are.
+  createParserTo(seq[T]):
+    let result1 = applyParser(a, input, seq[T])
+    let result2 = applyParser(b, result1.tail, seq[T])
+    return succeed(input, result1.value & result2.value, result2.tail)
+
 func `<<`*[T](a: Parser[T], b: Parser): Parser[T] =
   ## Expects each parser in sequence from left to right, ignoring the result of the right parser if successful.
   ##
   ## See also:
   ## - [>>](#>>,Parser[T],Parser)
   ## - [then](#then,Parser,Parser)
-
   createParserTo(T):
     let result1 = applyParser(a, input, T)
     let result2 = applyParser(b, result1.tail, T)
@@ -178,7 +220,6 @@ func `>>`*[T](a: Parser[T], b: Parser): Parser[T] =
   ## See also:
   ## - [<<](#<<,Parser[T],Parser)
   ## - [skip](#skip,Parser,Parser)
-
   createParserTo(T):
     let result1 = applyParser(a, input, T)
     let result2 = applyParser(b, result1.tail, T)
@@ -186,83 +227,84 @@ func `>>`*[T](a: Parser[T], b: Parser): Parser[T] =
 
 func `*`*[T](a: Parser[T], n: int): Parser[seq[T]] =
   ## Expects the parser a given number of times, returning a `seq` of the matches.
+  ##
+  ## See also:
+  ## - [times](#times.t,Parser,auto)
+  ## - [many](#many.t,Parser[T])
+  ## - [atLeast](#atLeast.t,Parser[T],int)
+  ## - [atMost](#atMost.t,Parser[T],int)
+  ## - [optional](#optional.t,Parser[T])
+  case n:
+    of 0: return (input: string) => succeed(input, newSeq[T](), input)
+    of 1: return a.map(x => @[x])
+    else: 
+      let parsers = a.repeat(n)
+      return parsers[1..^1].foldl(a & b, parsers[0].map(x => @[x]))
 
-  createParserTo(seq[T]):
-    var result1 = a.many()(input)
-    if result1.value.len != n: 
-      return fail[seq[T]](input, "Expected $1 value(s)" % $n)
-    result1
-
-func `*`*[T](a: Parser[T], n: HSlice[int,int]): Parser[seq[T]] =
+func `*`*[T](a: Parser[T], n: Slice[int]): Parser[seq[T]] =
   ## Expects the parser a number of times in the given range, returning a `seq` of the matches.
-  ##
-  ## See also:
-  ## - [times](#times.t,Parser,auto)
-  ## - [many](#many,Parser[T])
-  ## - [atLeast](#atLeast.t,Parser[T],int)
-  ## - [atMost](#atMost.t,Parser[T],int)
-
   createParserTo(seq[T]):
-    var result1 = a.many()(input)
-    if result1.value.len notin n: 
-      return fail[seq[T]](input, "Expected $1 to $2 value(s)" % [$n.a, $n.b])
-    result1
-
-func many*[T](a: Parser[T]): Parser[seq[T]] =
-  ## Expects the parser 0 or more times, returning a `seq` of the matches.
-  ##
-  ## See also:
-  ## - [*](#*,Parser[T],HSlice[int,int])
-  ## - [times](#times.t,Parser,auto)
-  ## - [atLeast](#atLeast.t,Parser[T],int)
-  ## - [atMost](#atMost.t,Parser[T],int)
-
-  createParserTo(seq[T]):
+    let 
+      initial = a * n.a
+      result1 = applyParser(initial, input, seq[T])
     var 
-      result1 = a(input)
-      outputs: seq[T] = @[]
-    while result1.kind == success:
-      outputs.add(result1.value)
-      result1 = a(result1.tail)
-    succeed(input, outputs, result1.tail)
+      result2 = a(result1.tail)
+      outputs = newSeq[T]()
+    for i in n.a ..< n.b:
+      if result2.kind == failure: break
+      outputs.add(result2.value)
+      if i < n.b-1: result2 = a(result2.tail)
+
+    succeed(input, result1.value & outputs, result2.tail)
 
 template atLeast*[T](a: Parser[T], n: int): Parser[seq[T]] = 
   ## Expects the parser `n` or more times, returning a `seq` of the matches.
   ##
   ## See also:
-  ## - [*](#*,Parser[T],HSlice[int,int])
+  ## - [*](#*,Parser[T],Slice[int])
   ## - [times](#times.t,Parser,auto)
-  ## - [many](#many,Parser[T])
+  ## - [many](#many.t,Parser[T])
   ## - [atMost](#atMost.t,Parser[T],int)
+  ## - [optional](#optional.t,Parser[T])
   a.times(n..high(int))
 
 template atMost*[T](a: Parser[T], n: int): Parser[seq[T]] = 
   ## Expects the parser `n` or fewer times, returning a `seq` of the matches.
   ##
   ## See also:
-  ## - [*](#*,Parser[T],HSlice[int,int])
+  ## - [*](#*,Parser[T],Slice[int])
   ## - [times](#times.t,Parser,auto)
-  ## - [many](#many,Parser[T])
+  ## - [many](#many.t,Parser[T])
   ## - [atLeast](#atLeast.t,Parser[T],int)
+  ## - [optional](#optional.t,Parser[T])
   a.times(0..n)
 
-
-func map*[T,U](a: Parser[T], fn: proc(x: T): U): Parser[U] = 
-  ## If the parser is successful, calls `fn` on the parsed value and succeeds with its return value.
+template many*[T](a: Parser[T]): Parser[seq[T]] =
+  ## Expects the parser 0 or more times, returning a `seq` of the matches.
   ##
   ## See also:
-  ## - [result](#result.t,Parser,T)
+  ## - [*](#*,Parser[T],Slice[int])
+  ## - [times](#times.t,Parser,auto)
+  ## - [atLeast](#atLeast.t,Parser[T],int)
+  ## - [atMost](#atMost.t,Parser[T],int)
+  ## - [optional](#optional.t,Parser[T])
+  a.atLeast(0)
 
-  createParserTo(U):
-    let result1 = applyParser(a, input, U)
-    return succeed(input, fn(result1.value), result1.tail)
-
-template result*[T](a: Parser, r: T): Parser[T] = 
-  ## If the parser is successful, succeeds with the given `r` as value.
+template optional*[T](a: Parser[T]): Parser[seq[T]] =
+  ## Expects the parser 0 or 1 times, returning a `seq` of the matches.
   ##
   ## See also:
-  ## - [map](#map,Parser[T],proc(T))
-  a.map(x => r)
+  ## - [*](#*,Parser[T],Slice[int])
+  ## - [times](#times.t,Parser,auto)
+  ## - [many](#many.t,Parser[T])
+  ## - [atLeast](#atLeast.t,Parser[T],int)
+  ## - [atMost](#atMost.t,Parser[T],int)
+  a.atMost(1)
+
+template flatten*[T](p: Parser[seq[seq[T]]]): Parser[seq[T]] =
+  p.map(x => (case x.len:
+    of 0: newSeq[T]()
+    else: x.foldl(a & b)))
 
 
 # === String Parser Specific Combinators ===
@@ -281,14 +323,13 @@ template join*(a: Parser[seq[string or char]], delim: string or char): Parser[st
 
 template then*(a, b: Parser): auto = a >> b         ## Textual alternative to [>>](#>>,Parser[T],Parser).
 template skip*(a, b: Parser): auto = a << b         ## Textual alternative to [<<](#<<,Parser[T],Parser).
-template times*(a: Parser, n: auto): auto = a * n   ## Textual alternative to [*](#*,Parser[T],HSlice[int,int]).
+template times*(a: Parser, n: auto): auto = a * n   ## Textual alternative to [*](#*,Parser[T],Slice[int]).
 
 template chain*[T](p1, p2: Parser[T], ps: varargs[Parser[T]]): Parser[seq[T]] =
   ## Expects the passed parsers in sequence from left to right, creating a `seq` of their results.
   ## 
   ## See also:
   ## - [&](#&,Parser[T],Parser[T])
-
   var outp = p1 & p2
   for p in ps: outp = outp & p
   outp
@@ -298,7 +339,6 @@ template oneOf*[T](p1, p2: Parser[T], ps: varargs[Parser[T]]): Parser[T] =
   ## 
   ## See also:
   ## - [|](#|,Parser[T],Parser[T])
-
   var outp = p1 | p2
   for p in ps: outp = outp | p
   outp
@@ -316,12 +356,12 @@ converter toStringParser*(a: Parser[char]): Parser[string] =
 
 let 
   eofImpl = createParser:   
-    if input.len > 0: return fail(input, "Expected EOF")
+    if input.len > 0: return fail(input, @["EOF"])
     succeed(input, "", "")
 
   anyCharImpl = createParserTo(char):
     if input.len > 0: return succeed(input, input[0], input[1..^1])
-    fail(input, "Expected any character, got EOF")
+    fail(input, @["any character"])
 
 let 
   eof*          = eofImpl                                                     ## A parser that fails if there is any remaining input.

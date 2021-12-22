@@ -3,6 +3,8 @@ import unittest
 import honeycomb
 import strutils
 
+from sugar import `=>`
+
 suite "core parsers":
   
   test "literal string":
@@ -17,7 +19,7 @@ suite "core parsers":
     check result1.fromInput == "Hello, world!"
 
     check result2.kind      == failure
-    check result2.error     == "Expected 'Hello'"
+    check result2.error     == "[1:1] Expected 'Hello'"
     check result2.tail      == "Greetings, peasants!"
     check result2.fromInput == "Greetings, peasants!"
 
@@ -33,7 +35,7 @@ suite "core parsers":
     check result1.fromInput == "Hello, world!"
 
     check result2.kind      == failure
-    check result2.error     == "Expected 'H'"
+    check result2.error     == "[1:1] Expected 'H'"
     check result2.tail      == "Greetings, peasants!"
     check result2.fromInput == "Greetings, peasants!"
 
@@ -55,7 +57,7 @@ suite "core parsers":
     check result2.fromInput == "Greetings, peasants!"
 
     check result3.kind      == failure
-    check result3.error     == "Expected one of 'HG'"
+    check result3.error     == "[1:1] Expected character from 'HG'"
     check result3.tail      == "Ahoy there!"
     check result3.fromInput == "Ahoy there!"
 
@@ -71,7 +73,7 @@ suite "core parsers":
     check result1.fromInput == "Hello, world!"
 
     check result2.kind      == failure
-    check result2.error     == r"Expected 'H\w+'"
+    check result2.error     == r"[1:1] Expected 'H\w+'"
     check result2.tail      == "Greetings, peasants!"
     check result2.fromInput == "Greetings, peasants!"
 
@@ -88,7 +90,7 @@ suite "predefined parsers":
     check result1.fromInput == ""
 
     check result2.kind      == failure
-    check result2.error     == "Expected EOF"
+    check result2.error     == "[1:1] Expected EOF"
     check result2.tail      == "Hello, world!"
     check result2.fromInput == "Hello, world!"
   
@@ -103,7 +105,7 @@ suite "predefined parsers":
     check result1.fromInput == "Hello, world!"
 
     check result2.kind      == failure
-    check result2.error     == "Expected any character, got EOF"
+    check result2.error     == "[1:1] Expected any character"
     check result2.tail      == ""
     check result2.fromInput == ""
   
@@ -118,7 +120,7 @@ suite "predefined parsers":
     check result1.fromInput == "  \t \n  \r  Hello, world!"
 
     check result2.kind      == failure
-    check result2.error     == r"Expected '\s+'"
+    check result2.error     == r"[1:1] Expected '\s+'"
     check result2.tail      == "Hello, world!"
     check result2.fromInput == "Hello, world!"
   
@@ -133,7 +135,7 @@ suite "predefined parsers":
     check result1.fromInput == "Hello, world!"
 
     check result2.kind      == failure
-    check result2.error     == "Expected one of 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'"
+    check result2.error     == "[1:1] Expected character from 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'"
     check result2.tail      == "127"
     check result2.fromInput == "127"
   
@@ -148,7 +150,7 @@ suite "predefined parsers":
     check result1.fromInput == "127"
 
     check result2.kind      == failure
-    check result2.error     == "Expected one of '0123456789'"
+    check result2.error     == "[1:1] Expected character from '0123456789'"
     check result2.tail      == "Hello, world!"
     check result2.fromInput == "Hello, world!"
   
@@ -169,7 +171,7 @@ suite "predefined parsers":
     check result2.fromInput == "127"
 
     check result3.kind      == failure
-    check result3.error     == "Expected one of '0123456789'"
+    check result3.error     == "[1:1] Expected one of character from 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', character from '0123456789'"
     check result3.tail      == "!@%$!^#"
     check result3.fromInput == "!@%$!^#"
 
@@ -185,6 +187,7 @@ suite "general combinators":
       let 
         result1 = parser("Hello, world!")
         result2 = parser("Greetings, peasants!")
+        result3 = parser("Hello,world!")
 
       check result1.kind      == success
       check result1.value     == @["Hello", ",", " ", "world", "!"]
@@ -192,9 +195,14 @@ suite "general combinators":
       check result1.fromInput == "Hello, world!"
 
       check result2.kind      == failure
-      check result2.error     == "Expected 'Hello'"
+      check result2.error     == "[1:1] Expected 'Hello'"
       check result2.tail      == "Greetings, peasants!"
       check result2.fromInput == "Greetings, peasants!"
+
+      check result3.kind      == failure
+      check result3.error     == r"[1:7] Expected '\s+'"
+      check result3.tail      == "world!"
+      check result3.fromInput == "Hello,world!"
 
   test "oneOf":
     let parsers = [
@@ -219,7 +227,7 @@ suite "general combinators":
       check result2.fromInput == "Greetings, peasants!"
 
       check result3.kind      == failure
-      check result3.error     == "Expected 'Greetings'"
+      check result3.error     == "[1:1] Expected one of 'Hello', 'Greetings'"
       check result3.tail      == "Ahoy there!"
       check result3.fromInput == "Ahoy there!"
 
@@ -240,7 +248,7 @@ suite "general combinators":
       check result1.fromInput == "Hello, world!"
 
       check result2.kind      == failure
-      check result2.error     == "Expected 'Hello'"
+      check result2.error     == "[1:1] Expected 'Hello'"
       check result2.tail      == "Greetings, peasants!"
       check result2.fromInput == "Greetings, peasants!"
 
@@ -261,7 +269,7 @@ suite "general combinators":
       check result1.fromInput == "Hello, world!"
 
       check result2.kind      == failure
-      check result2.error     == "Expected 'Hello'"
+      check result2.error     == "[1:1] Expected 'Hello'"
       check result2.tail      == "Greetings, peasants!"
       check result2.fromInput == "Greetings, peasants!"
 
@@ -304,14 +312,14 @@ suite "general combinators":
       check result1.fromInput == "Hello Hello Hello "
 
       check result2.kind      == failure
-      check result2.error     == "Expected 3 value(s)"
-      check result2.tail      == "Hello Hello "
+      check result2.error     == "[1:13] Expected 'Hello '"
+      check result2.tail      == ""
       check result2.fromInput == "Hello Hello "
 
   test "times range":
     let parsers = [
-      s("Hello ") * (3..4),
-      s("Hello ").times(3..4)
+      s("Hello ") * (3..4) << eof,
+      s("Hello ").times(3..4) << eof
     ]
 
     for parser in parsers:
@@ -332,13 +340,13 @@ suite "general combinators":
       check result2.fromInput == "Hello Hello Hello Hello "
 
       check result3.kind      == failure
-      check result3.error     == "Expected 3 to 4 value(s)"
-      check result3.tail      == "Hello Hello "
+      check result3.error     == "[1:13] Expected 'Hello '"
+      check result3.tail      == ""
       check result3.fromInput == "Hello Hello "
 
       check result4.kind      == failure
-      check result4.error     == "Expected 3 to 4 value(s)"
-      check result4.tail      == "Hello Hello Hello Hello Hello "
+      check result4.error     == "[1:25] Expected EOF"
+      check result4.tail      == "Hello "
       check result4.fromInput == "Hello Hello Hello Hello Hello "
 
   test "atLeast":
@@ -359,13 +367,13 @@ suite "general combinators":
     check result2.fromInput == "Hello Hello Hello Hello "
 
     check result3.kind      == failure
-    check result3.error     == "Expected 3 to 9223372036854775807 value(s)"
-    check result3.tail      == "Hello Hello "
+    check result3.error     == "[1:13] Expected 'Hello '"
+    check result3.tail      == ""
     check result3.fromInput == "Hello Hello "
 
   test "atMost":
     let 
-      parser  = s("Hello ").atMost(3)
+      parser  = s("Hello ").atMost(3) << eof
       result1 = parser("Hello Hello Hello ")
       result2 = parser("Hello Hello ")
       result3 = parser("Hello Hello Hello Hello ")
@@ -381,8 +389,8 @@ suite "general combinators":
     check result2.fromInput == "Hello Hello "
 
     check result3.kind      == failure
-    check result3.error     == "Expected 0 to 3 value(s)"
-    check result3.tail      == "Hello Hello Hello Hello "
+    check result3.error     == "[1:19] Expected EOF"
+    check result3.tail      == "Hello "
     check result3.fromInput == "Hello Hello Hello Hello "
 
   test "map":
@@ -397,7 +405,7 @@ suite "general combinators":
     check result1.fromInput == "127"
 
     check result2.kind      == failure
-    check result2.error     == "Expected 1 to 9223372036854775807 value(s)"
+    check result2.error     == "[1:1] Expected character from '0123456789'"
     check result2.tail      == "Hello, world!"
     check result2.fromInput == "Hello, world!"
 
@@ -413,7 +421,7 @@ suite "general combinators":
     check result1.fromInput == "127"
 
     check result2.kind      == failure
-    check result2.error     == "Expected 1 to 9223372036854775807 value(s)"
+    check result2.error     == "[1:1] Expected character from '0123456789'"
     check result2.tail      == "Hello, world!"
     check result2.fromInput == "Hello, world!"
 
@@ -431,8 +439,8 @@ suite "type-specific combinators":
     check result1.fromInput == "Hello Hello Hello "
 
     check result2.kind      == failure
-    check result2.error     == "Expected 3 value(s)"
-    check result2.tail      == "Hello Hello "
+    check result2.error     == "[1:13] Expected 'Hello '"
+    check result2.tail      == ""
     check result2.fromInput == "Hello Hello "
 
   test "seq[string]: join delimited":
@@ -454,15 +462,15 @@ suite "type-specific combinators":
     check result2.fromInput == "Hello Hello Hello "
 
     check result3.kind      == failure
-    check result3.error     == "Expected 3 value(s)"
-    check result3.tail      == "Hello Hello "
+    check result3.error     == "[1:13] Expected 'Hello'"
+    check result3.tail      == ""
     check result3.fromInput == "Hello Hello "
 
 suite "custom parsers":
   
   test "custom parser":
     let parser = createParser:
-      if input.len < 10: return fail(input, "Expected at least 10 characters")
+      if input.len < 10: return fail(input, @["at least 10 characters"])
       return succeed(input, input[0..9], input[10..^1])
 
     let 
@@ -475,7 +483,7 @@ suite "custom parsers":
     check result1.fromInput == "Hello, world!"
 
     check result2.kind      == failure
-    check result2.error     == "Expected at least 10 characters"
+    check result2.error     == "[1:1] Expected at least 10 characters"
     check result2.tail      == "Alfalfa"
     check result2.fromInput == "Alfalfa"
 
@@ -500,6 +508,20 @@ suite "custom parsers":
     check result1.fromInput == "Hello, world!"
 
     check result2.kind      == failure
-    check result2.error     == "Expected 'H'"
+    check result2.error     == "[1:1] Expected 'H'"
     check result2.tail      == "Greetings, peasants!"
     check result2.fromInput == "Greetings, peasants!"
+
+suite "integration examples":
+
+  test "receipt parser":
+    let 
+      receiptEntry  = (regex(r"[\w\s]+") << s(": ")) & (digit.atLeast(1) << c('.')).join & digit.times(2).join << c('\n').optional()
+      receiptParser = receiptEntry.map(x => (x[0], parseFloat("$1.$2" % x[1..^1]))).atLeast(1)
+      testReceipt   = "Milk: 4.00\nEggs: 15.99\nCool robot: 69.99"
+      result1       = receiptParser(testReceipt)
+
+    check result1.kind      == success
+    check result1.value     == @[("Milk", 4.00), ("Eggs", 15.99), ("Cool robot", 69.99)]
+    check result1.tail      == ""
+    check result1.fromInput == testReceipt
