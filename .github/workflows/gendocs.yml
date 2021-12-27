@@ -19,8 +19,8 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add docs
-          git stash
+          git stash -- docs
           git checkout docs --
-          git checkout stash -- .
+          git checkout stash -- docs
           git commit -m "Update documentation"
           git push
