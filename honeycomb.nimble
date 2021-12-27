@@ -21,4 +21,6 @@ task test, "Run honeycomb test cases":
   exec "nim r tests/test.nim " & commandLineParams[3..^1].mapIt("\"$1\"" % it).join(" ")
 
 task gendocs, "Generate documentation":
-  exec "nimble doc2 -o:docs/ src/honeycomb.nim"
+  var commit = commandLineParams[3..^1].mapIt("\"$1\"" % it).join(" ")
+  if commit == "": commit = "master"
+  exec "nimble doc2 --git.url:https://github.com/katrinakitten/honeycomb --git.commit:$1 -o:docs/ src/honeycomb.nim" % commit
