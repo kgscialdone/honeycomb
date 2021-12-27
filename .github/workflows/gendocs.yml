@@ -18,7 +18,7 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add docs
+          git add docs -f
           git stash -- docs
           git checkout docs --
           git checkout stash -- docs
