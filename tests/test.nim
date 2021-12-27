@@ -10,8 +10,8 @@ suite "core parsers":
   test "literal string":
     let 
       parser  = s("Hello")
-      result1 = parser("Hello, world!")
-      result2 = parser("Greetings, peasants!")
+      result1 = parser.parse("Hello, world!")
+      result2 = parser.parse("Greetings, peasants!")
 
     check result1.kind      == success
     check result1.value     == "Hello"
@@ -26,8 +26,8 @@ suite "core parsers":
   test "single character":
     let 
       parser  = c('H')
-      result1 = parser("Hello, world!")
-      result2 = parser("Greetings, peasants!")
+      result1 = parser.parse("Hello, world!")
+      result2 = parser.parse("Greetings, peasants!")
 
     check result1.kind      == success
     check result1.value     == 'H'
@@ -42,9 +42,9 @@ suite "core parsers":
   test "character of string":
     let 
       parser  = c("HG")
-      result1 = parser("Hello, world!")
-      result2 = parser("Greetings, peasants!")
-      result3 = parser("Ahoy there!")
+      result1 = parser.parse("Hello, world!")
+      result2 = parser.parse("Greetings, peasants!")
+      result3 = parser.parse("Ahoy there!")
 
     check result1.kind      == success
     check result1.value     == 'H'
@@ -64,8 +64,8 @@ suite "core parsers":
   test "regex":
     let 
       parser  = regex(r"H\w+")
-      result1 = parser("Hello, world!")
-      result2 = parser("Greetings, peasants!")
+      result1 = parser.parse("Hello, world!")
+      result2 = parser.parse("Greetings, peasants!")
 
     check result1.kind      == success
     check result1.value     == "Hello"
@@ -77,12 +77,21 @@ suite "core parsers":
     check result2.tail      == "Greetings, peasants!"
     check result2.fromInput == "Greetings, peasants!"
 
+  test "raiseIfFailed":
+    let
+      parser  = s("Hello")
+      result1 = parser.parse("Hello, world!")
+      result2 = parser.parse("Greetings, peasants!")
+
+    result1.raiseIfFailed
+    expect ParseError: result2.raiseIfFailed
+
 suite "predefined parsers":
   
   test "eof":
     let
-      result1 = eof("")
-      result2 = eof("Hello, world!")
+      result1 = eof.parse("")
+      result2 = eof.parse("Hello, world!")
 
     check result1.kind      == success
     check result1.value     == ""
@@ -96,8 +105,8 @@ suite "predefined parsers":
   
   test "anyChar":
     let
-      result1 = anyChar("Hello, world!")
-      result2 = anyChar("")
+      result1 = anyChar.parse("Hello, world!")
+      result2 = anyChar.parse("")
 
     check result1.kind      == success
     check result1.value     == 'H'
@@ -111,8 +120,8 @@ suite "predefined parsers":
   
   test "whitespace":
     let
-      result1 = whitespace("  \t \n  \r  Hello, world!")
-      result2 = whitespace("Hello, world!")
+      result1 = whitespace.parse("  \t \n  \r  Hello, world!")
+      result2 = whitespace.parse("Hello, world!")
 
     check result1.kind      == success
     check result1.value     == "  \t \n  \r  "
@@ -126,8 +135,8 @@ suite "predefined parsers":
   
   test "letter":
     let
-      result1 = letter("Hello, world!")
-      result2 = letter("127")
+      result1 = letter.parse("Hello, world!")
+      result2 = letter.parse("127")
 
     check result1.kind      == success
     check result1.value     == 'H'
@@ -141,8 +150,8 @@ suite "predefined parsers":
   
   test "digit":
     let
-      result1 = digit("127")
-      result2 = digit("Hello, world!")
+      result1 = digit.parse("127")
+      result2 = digit.parse("Hello, world!")
 
     check result1.kind      == success
     check result1.value     == '1'
@@ -156,9 +165,9 @@ suite "predefined parsers":
   
   test "alphanumeric":
     let
-      result1 = alphanumeric("Hello, world!")
-      result2 = alphanumeric("127")
-      result3 = alphanumeric("!@%$!^#")
+      result1 = alphanumeric.parse("Hello, world!")
+      result2 = alphanumeric.parse("127")
+      result3 = alphanumeric.parse("!@%$!^#")
 
     check result1.kind      == success
     check result1.value     == 'H'
@@ -185,9 +194,9 @@ suite "general combinators":
 
     for parser in parsers:
       let 
-        result1 = parser("Hello, world!")
-        result2 = parser("Greetings, peasants!")
-        result3 = parser("Hello,world!")
+        result1 = parser.parse("Hello, world!")
+        result2 = parser.parse("Greetings, peasants!")
+        result3 = parser.parse("Hello,world!")
 
       check result1.kind      == success
       check result1.value     == @["Hello", ",", " ", "world", "!"]
@@ -212,9 +221,9 @@ suite "general combinators":
 
     for parser in parsers:
       let 
-        result1 = parser("Hello, world!")
-        result2 = parser("Greetings, peasants!")
-        result3 = parser("Ahoy there!")
+        result1 = parser.parse("Hello, world!")
+        result2 = parser.parse("Greetings, peasants!")
+        result3 = parser.parse("Ahoy there!")
 
       check result1.kind      == success
       check result1.value     == "Hello"
@@ -239,8 +248,8 @@ suite "general combinators":
 
     for parser in parsers:
       let 
-        result1 = parser("Hello, world!")
-        result2 = parser("Greetings, peasants!")
+        result1 = parser.parse("Hello, world!")
+        result2 = parser.parse("Greetings, peasants!")
 
       check result1.kind      == success
       check result1.value     == "world"
@@ -260,8 +269,8 @@ suite "general combinators":
 
     for parser in parsers:
       let 
-        result1 = parser("Hello, world!")
-        result2 = parser("Greetings, peasants!")
+        result1 = parser.parse("Hello, world!")
+        result2 = parser.parse("Greetings, peasants!")
 
       check result1.kind      == success
       check result1.value     == "Hello"
@@ -276,9 +285,9 @@ suite "general combinators":
   test "many":
     let 
       parser  = s("Hello ").many()
-      result1 = parser("Hello Hello Hello ")
-      result2 = parser("Hello Hello ")
-      result3 = parser("")
+      result1 = parser.parse("Hello Hello Hello ")
+      result2 = parser.parse("Hello Hello ")
+      result3 = parser.parse("")
 
     check result1.kind      == success
     check result1.value     == @["Hello ","Hello ","Hello "]
@@ -303,8 +312,8 @@ suite "general combinators":
 
     for parser in parsers:
       let 
-        result1 = parser("Hello Hello Hello ")
-        result2 = parser("Hello Hello ")
+        result1 = parser.parse("Hello Hello Hello ")
+        result2 = parser.parse("Hello Hello ")
 
       check result1.kind      == success
       check result1.value     == @["Hello ","Hello ","Hello "]
@@ -324,10 +333,10 @@ suite "general combinators":
 
     for parser in parsers:
       let 
-        result1 = parser("Hello Hello Hello ")
-        result2 = parser("Hello Hello Hello Hello ")
-        result3 = parser("Hello Hello ")
-        result4 = parser("Hello Hello Hello Hello Hello ")
+        result1 = parser.parse("Hello Hello Hello ")
+        result2 = parser.parse("Hello Hello Hello Hello ")
+        result3 = parser.parse("Hello Hello ")
+        result4 = parser.parse("Hello Hello Hello Hello Hello ")
 
       check result1.kind      == success
       check result1.value     == @["Hello ","Hello ","Hello "]
@@ -352,9 +361,9 @@ suite "general combinators":
   test "atLeast":
     let 
       parser  = s("Hello ").atLeast(3)
-      result1 = parser("Hello Hello Hello ")
-      result2 = parser("Hello Hello Hello Hello ")
-      result3 = parser("Hello Hello ")
+      result1 = parser.parse("Hello Hello Hello ")
+      result2 = parser.parse("Hello Hello Hello Hello ")
+      result3 = parser.parse("Hello Hello ")
 
     check result1.kind      == success
     check result1.value     == @["Hello ","Hello ","Hello "]
@@ -374,9 +383,9 @@ suite "general combinators":
   test "atMost":
     let 
       parser  = s("Hello ").atMost(3) << eof
-      result1 = parser("Hello Hello Hello ")
-      result2 = parser("Hello Hello ")
-      result3 = parser("Hello Hello Hello Hello ")
+      result1 = parser.parse("Hello Hello Hello ")
+      result2 = parser.parse("Hello Hello ")
+      result3 = parser.parse("Hello Hello Hello Hello ")
 
     check result1.kind      == success
     check result1.value     == @["Hello ","Hello ","Hello "]
@@ -396,8 +405,8 @@ suite "general combinators":
   test "map":
     let
       parser  = digit.atLeast(1).join.map(parseInt)
-      result1 = parser("127")
-      result2 = parser("Hello, world!")
+      result1 = parser.parse("127")
+      result2 = parser.parse("Hello, world!")
 
     check result1.kind      == success
     check result1.value     == 127
@@ -412,8 +421,8 @@ suite "general combinators":
   test "result":
     let
       parser  = digit.atLeast(1).result("Successfully parsed number")
-      result1 = parser("127")
-      result2 = parser("Hello, world!")
+      result1 = parser.parse("127")
+      result2 = parser.parse("Hello, world!")
 
     check result1.kind      == success
     check result1.value     == "Successfully parsed number"
@@ -430,8 +439,8 @@ suite "type-specific combinators":
   test "seq[string]: join":
     let
       parser  = s("Hello ").times(3).join
-      result1 = parser("Hello Hello Hello ")
-      result2 = parser("Hello Hello ")
+      result1 = parser.parse("Hello Hello Hello ")
+      result2 = parser.parse("Hello Hello ")
 
     check result1.kind      == success
     check result1.value     == "Hello Hello Hello "
@@ -447,9 +456,9 @@ suite "type-specific combinators":
     let
       parser1 = (s("Hello") << whitespace).times(3).join(", ")
       parser2 = (s("Hello") << whitespace).times(3).join(',')
-      result1 = parser1("Hello Hello Hello ")
-      result2 = parser2("Hello Hello Hello ")
-      result3 = parser1("Hello Hello ")
+      result1 = parser1.parse("Hello Hello Hello ")
+      result2 = parser2.parse("Hello Hello Hello ")
+      result3 = parser1.parse("Hello Hello ")
 
     check result1.kind      == success
     check result1.value     == "Hello, Hello, Hello"
@@ -474,8 +483,8 @@ suite "custom parsers":
       return succeed(input, input[0..9], input[10..^1])
 
     let 
-      result1 = parser("Hello, world!")
-      result2 = parser("Alfalfa")
+      result1 = parser.parse("Hello, world!")
+      result2 = parser.parse("Alfalfa")
 
     check result1.kind      == success
     check result1.value     == "Hello, wor"
@@ -499,8 +508,8 @@ suite "custom parsers":
 
     let 
       parser  = both(c('H').toStringParser, s("Hello"))
-      result1 = parser("Hello, world!")
-      result2 = parser("Greetings, peasants!")
+      result1 = parser.parse("Hello, world!")
+      result2 = parser.parse("Greetings, peasants!")
 
     check result1.kind      == success
     check result1.value     == ("H", "Hello")
@@ -512,6 +521,35 @@ suite "custom parsers":
     check result2.tail      == "Greetings, peasants!"
     check result2.fromInput == "Greetings, peasants!"
 
+suite "forward declarations":
+  
+  test "forward declarations":
+    var parser1 = fwdcl[string]()
+    let 
+      parser2 = (s("Hello, ") & parser1 & c('!'))
+      result1 = parser2.parse("Hello, world!")
+
+    parser1.become(s("world"))
+
+    let
+      result2 = parser2.parse("Hello, world!")
+      result3 = parser2.parse("Hello, peasants!")
+
+    check result1.kind      == failure
+    check result1.error     == "[1:8] Expected forward-declared parser to be initialized with .become(Parser)"
+    check result1.tail      == "world!"
+    check result1.fromInput == "Hello, world!"
+
+    check result2.kind      == success
+    check result2.value     == @["Hello, ", "world", "!"]
+    check result2.tail      == ""
+    check result2.fromInput == "Hello, world!"
+
+    check result3.kind      == failure
+    check result3.error     == "[1:8] Expected 'world'"
+    check result3.tail      == "peasants!"
+    check result3.fromInput == "Hello, peasants!"
+
 suite "integration examples":
 
   test "receipt parser":
@@ -519,7 +557,7 @@ suite "integration examples":
       receiptEntry  = (regex(r"[\w\s]+") << s(": ")) & (digit.atLeast(1) << c('.')).join & digit.times(2).join << c('\n').optional()
       receiptParser = receiptEntry.map(x => (x[0], parseFloat("$1.$2" % x[1..^1]))).atLeast(1)
       testReceipt   = "Milk: 4.00\nEggs: 15.99\nCool robot: 69.99"
-      result1       = receiptParser(testReceipt)
+      result1       = receiptParser.parse(testReceipt)
 
     check result1.kind      == success
     check result1.value     == @[("Milk", 4.00), ("Eggs", 15.99), ("Cool robot", 69.99)]

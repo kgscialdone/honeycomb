@@ -98,19 +98,28 @@ window.addEventListener('DOMContentLoaded', main);
     </select>
   </div>
   <ul class="simple simple-toc" id="toc-list">
-<li>
+<li><a class="reference" id="key-functions-and-types_toc" href="#key-functions-and-types">Key functions and types</a></li>
+<ul class="simple"><li><a class="reference" id="key-functions-and-types-core-parser-constructors_toc" href="#key-functions-and-types-core-parser-constructors">Core parser constructors</a></li>
+<li><a class="reference" id="key-functions-and-types-predefined-parsers_toc" href="#key-functions-and-types-predefined-parsers">Predefined parsers</a></li>
+<li><a class="reference" id="key-functions-and-types-parser-combinators_toc" href="#key-functions-and-types-parser-combinators">Parser combinators</a></li>
+<li><a class="reference" id="key-functions-and-types-execution-and-results_toc" href="#key-functions-and-types-execution-and-results">Execution and results</a></li>
+<li><a class="reference" id="key-functions-and-types-advanced-parser-construction-tools_toc" href="#key-functions-and-types-advanced-parser-construction-tools">Advanced parser construction tools</a></li>
+</ul><li>
   <a class="reference reference-toplevel" href="#7" id="57">Types</a>
   <ul class="simple simple-toc-section">
-      <li><a class="reference" href="#Parser"
-    title="Parser[T] = proc (input: string): ParseResult[T]">Parser</a></li>
+      <li><a class="reference" href="#ParseError"
+    title="ParseError = object of CatchableError">ParseError</a></li>
+  <li><a class="reference" href="#Parser"
+    title="Parser[T] = ref object
+  body: proc (input: string): ParseResult[T]">Parser</a></li>
   <li><a class="reference" href="#ParseResult"
     title="ParseResult[T] = object
   case kind*: ParseResultKind
   of success:
     value*: T                ## The value of the successful parse.
   of failure:
-    expected*: seq[string]   ## The error message of the failed parse.
-  tail*: string              ## The remaining unparsed input, or all input when failed.
+    expected*: seq[string]   ## A `seq` of expected values for a failed parse.
+  tail*: string              ## The remaining unparsed input.
   fromInput*: string         ## The input from which this result was generated.">ParseResult</a></li>
   <li><a class="reference" href="#ParseResultKind"
     title="ParseResultKind = enum
@@ -175,13 +184,18 @@ window.addEventListener('DOMContentLoaded', main);
 
   </ul>
   <ul class="simple nested-toc-section">error
-      <li><a class="reference" href="#error%2CParseResult%5BT%5D"
-    title="error[T](result1: ParseResult[T]): string">error[T](result1: ParseResult[T]): string</a></li>
+      <li><a class="reference" href="#error%2CParseResult"
+    title="error(result1: ParseResult): string">error(result1: ParseResult): string</a></li>
 
   </ul>
   <ul class="simple nested-toc-section">map
       <li><a class="reference" href="#map%2CParser%5BT%5D%2Cproc%28T%29"
     title="map[T, U](a: Parser[T]; fn: proc (x: T): U): Parser[U]">map[T, U](a: Parser[T]; fn: proc (x: T): U): Parser[U]</a></li>
+
+  </ul>
+  <ul class="simple nested-toc-section">parse
+      <li><a class="reference" href="#parse%2CParser%5BT%5D%2Cstring"
+    title="parse[T](p: Parser[T]; input: string): ParseResult[T]">parse[T](p: Parser[T]; input: string): ParseResult[T]</a></li>
 
   </ul>
   <ul class="simple nested-toc-section">regex
@@ -218,7 +232,7 @@ window.addEventListener('DOMContentLoaded', main);
   <ul class="simple simple-toc-section">
       <ul class="simple nested-toc-section">applyParser
       <li><a class="reference" href="#applyParser.m%2Cuntyped%2Cuntyped%2Cuntyped"
-    title="applyParser(parser, input, failType: untyped)">applyParser(parser, input, failType: untyped)</a></li>
+    title="applyParser(parser, input, T: untyped)">applyParser(parser, input, T: untyped)</a></li>
 
   </ul>
 
@@ -235,6 +249,11 @@ window.addEventListener('DOMContentLoaded', main);
   <ul class="simple nested-toc-section">atMost
       <li><a class="reference" href="#atMost.t%2CParser%5BT%5D%2Cint"
     title="atMost[T](a: Parser[T]; n: int): Parser[seq[T]]">atMost[T](a: Parser[T]; n: int): Parser[seq[T]]</a></li>
+
+  </ul>
+  <ul class="simple nested-toc-section">become
+      <li><a class="reference" href="#become.t%2CParser%5BT%5D%2CParser%5BT%5D"
+    title="become[T](a: var Parser[T]; b: Parser[T])">become[T](a: var Parser[T]; b: Parser[T])</a></li>
 
   </ul>
   <ul class="simple nested-toc-section">chain
@@ -262,6 +281,11 @@ window.addEventListener('DOMContentLoaded', main);
     title="flatten[T](p: Parser[seq[seq[T]]]): Parser[seq[T]]">flatten[T](p: Parser[seq[seq[T]]]): Parser[seq[T]]</a></li>
 
   </ul>
+  <ul class="simple nested-toc-section">fwdcl
+      <li><a class="reference" href="#fwdcl.t"
+    title="fwdcl[T](): var Parser[T]">fwdcl[T](): var Parser[T]</a></li>
+
+  </ul>
   <ul class="simple nested-toc-section">join
       <li><a class="reference" href="#join.t%2CParser%5Bseq%5B%5D%5D"
     title="join(a: Parser[seq[string or char]]): Parser[string]">join(a: Parser[seq[string or char]]): Parser[string]</a></li>
@@ -282,6 +306,11 @@ window.addEventListener('DOMContentLoaded', main);
   <ul class="simple nested-toc-section">optional
       <li><a class="reference" href="#optional.t%2CParser%5BT%5D"
     title="optional[T](a: Parser[T]): Parser[seq[T]]">optional[T](a: Parser[T]): Parser[seq[T]]</a></li>
+
+  </ul>
+  <ul class="simple nested-toc-section">raiseIfFailed
+      <li><a class="reference" href="#raiseIfFailed.t%2CParseResult"
+    title="raiseIfFailed(result1: ParseResult)">raiseIfFailed(result1: ParseResult)</a></li>
 
   </ul>
   <ul class="simple nested-toc-section">result
@@ -316,24 +345,88 @@ window.addEventListener('DOMContentLoaded', main);
 </ul>
 
   </div>
-  
+  &nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L1"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L1" class="link-seesrc" target="_blank" >Edit</a>
+
   <div class="nine columns" id="content">
   <div id="tocRoot"></div>
   
-  <p class="module-desc"></p>
+  <p class="module-desc">Honeycomb is a parser combinator library written in pure Nim. It's designed to be simple, straightforward, and easy to expand.
+<h1><a class="toc-backref" id="key-functions-and-types" href="#key-functions-and-types">Key functions and types</a></h1>
+<h2><a class="toc-backref" id="key-functions-and-types-core-parser-constructors" href="#key-functions-and-types-core-parser-constructors">Core parser constructors</a></h2><ul class="simple"><li><a class="reference external" href="#s,string">s</a> - parse a literal string</li>
+<li><a class="reference external" href="#c,char">c</a> - parse a literal character, or one of a list of characters</li>
+<li><a class="reference external" href="#regex,string">regex</a> - parse a regular expression match</li>
+<li><a class="reference external" href="#fwdcl.t">fwdcl</a> - create a forward-declared parser which can be initialized later</li>
+</ul>
+
+<h2><a class="toc-backref" id="key-functions-and-types-predefined-parsers" href="#key-functions-and-types-predefined-parsers">Predefined parsers</a></h2><ul class="simple"><li><a class="reference external" href="#eof">eof</a> - A parser that fails if there is any remaining input.</li>
+<li><a class="reference external" href="#anyChar">anyChar</a> - A parser that succeeds for one character of any non-empty input.</li>
+<li><a class="reference external" href="#whitespace">whitespace</a> - A parser that expects at least one whitespace character.</li>
+<li><a class="reference external" href="#letter">letter</a> - A parser that expects one ASCII alphabetical character.</li>
+<li><a class="reference external" href="#digit">digit</a> - A parser that expects one ASCII digit character.</li>
+<li><a class="reference external" href="#alphanumeric">alphanumeric</a> - A parser that expects one ASCII alphanumeric character.</li>
+</ul>
+
+<h2><a class="toc-backref" id="key-functions-and-types-parser-combinators" href="#key-functions-and-types-parser-combinators">Parser combinators</a></h2><ul class="simple"><li><a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a> or <a class="reference external" href="#chain.t,Parser[T],Parser[T],varargs[Parser[T]]">chain</a> - expect multiple parsers one after the other</li>
+<li><a class="reference external" href="#|,Parser[T],Parser[T]">|</a> or <a class="reference external" href="#oneOf.t,Parser[T],Parser[T],varargs[Parser[T]]">oneOf</a> - expect one of multiple parsers, preferring the left</li>
+<li><a class="reference external" href="#&gt;&gt;,Parser[T],Parser">&gt;&gt;</a> or <a class="reference external" href="#then.t,Parser,Parser">then</a> - same as <tt class="docutils literal"><span class="pre"><span class="Operator">&amp;</span></span></tt>, but discards the left-hand parser's result instead of creating a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt></li>
+<li><a class="reference external" href="#&lt;&lt;,Parser[T],Parser">&lt;&lt;</a> or <a class="reference external" href="#skip.t,Parser,Parser">skip</a> - same as <tt class="docutils literal"><span class="pre"><span class="Operator">&amp;</span></span></tt>, but discards the right-hand parser's result instead of creating a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt></li>
+<li><a class="reference external" href="#*,Parser[T],int">*</a> or <a class="reference external" href="#times.t,Parser,auto">times</a> - expect a parser multiple times in a row, or a range of times</li>
+<li><a class="reference external" href="#many.t,Parser[T]">many</a> - expect a parser 0 or more times</li>
+<li><a class="reference external" href="#atLeast.t,Parser[T],int">atLeast</a> - expect a parser at least <tt class="docutils literal"><span class="pre"><span class="Identifier">n</span></span></tt> times</li>
+<li><a class="reference external" href="#atMost.t,Parser[T],int">atMost</a> - expect a parser 0 to <tt class="docutils literal"><span class="pre"><span class="Identifier">n</span></span></tt> times</li>
+<li><a class="reference external" href="#optional.t,Parser[T]">optional</a> - expect a parser 0 or 1 times</li>
+<li><a class="reference external" href="#map,Parser[T],proc(T)">map</a> - run a custom function on the value of a successful parse</li>
+<li><a class="reference external" href="#result.t,Parser,T">result</a> - replace the value of a successful parse with a constant value</li>
+</ul>
+
+<h2><a class="toc-backref" id="key-functions-and-types-execution-and-results" href="#key-functions-and-types-execution-and-results">Execution and results</a></h2><ul class="simple"><li><a class="reference external" href="#parse,Parser[T],string">parse</a> - execute a parser and convert it into a <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt></li>
+<li><a class="reference external" href="#error,ParseResult">error</a> - generate an error message from a failed <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt></li>
+<li><a class="reference external" href="#raiseIfFailed.t,ParseResult">raiseIfFailed</a> - raise a <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseError</span></span></tt> from a failed <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt></li>
+</ul>
+
+<h2><a class="toc-backref" id="key-functions-and-types-advanced-parser-construction-tools" href="#key-functions-and-types-advanced-parser-construction-tools">Advanced parser construction tools</a></h2><ul class="simple"><li><a class="reference external" href="#createParserTo.t,typedesc,untyped">createParserTo</a> - manually create a parser by defining its processing function</li>
+<li><a class="reference external" href="#createParser.t,untyped">createParser</a> - shortcut for <tt class="docutils literal"><span class="pre"><span class="Identifier">createParserTo</span><span class="Punctuation">(</span><span class="Identifier">string</span><span class="Punctuation">)</span></span></tt></li>
+<li><a class="reference external" href="#succeed.t,string,T,string">succeed</a> - create a successful <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt></li>
+<li><a class="reference external" href="#fail.t,string,seq[string]">fail</a> - create a failed <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt></li>
+<li><a class="reference external" href="#applyParser.m,untyped,untyped,untyped">applyParser</a> - apply a parser in the definition of a combinator, failing if the given parser fails</li>
+</ul>
+</p>
   <div class="section" id="7">
 <h1><a class="toc-backref" href="#7">Types</a></h1>
 <dl class="item">
-<div id="Parser">
-<dt><pre><a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span> <span class="Other">=</span> <span class="Keyword">proc</span> <span class="Other">(</span><span class="Identifier">input</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#ParseResult"><span class="Identifier">ParseResult</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
+<div id="ParseError">
+<dt><pre><a href="honeycomb.html#ParseError"><span class="Identifier">ParseError</span></a> <span class="Other">=</span> <span class="Keyword">object</span> <span class="Keyword">of</span> <span class="Identifier">CatchableError</span></pre></dt>
 <dd>
 
-<p>A simple parser. Returns a <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt> with the appropriate kind, depending on whether it successfully parsed.</p>
+
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L90"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L90" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
+</div>
+<div id="Parser">
+<dt><pre><a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span> <span class="Other">=</span> <span class="Keyword">ref</span> <span class="Keyword">object</span>
+  <span class="Identifier">body</span><span class="Other">:</span> <span class="Keyword">proc</span> <span class="Other">(</span><span class="Identifier">input</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#ParseResult"><span class="Identifier">ParseResult</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span>
+</pre></dt>
+<dd>
+
+<p>A constructed parser.</p>
 <p>See also:</p>
 <ul class="simple"><li><a class="reference external" href="#createParserTo.t,typedesc,untyped">createParserTo</a></li>
 <li><a class="reference external" href="#createParser.t,untyped">createParser</a></li>
+<li><a class="reference external" href="#fwdcl.t">fwdcl</a></li>
+<li><a class="reference external" href="#parse,Parser[T],string">parse</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L65"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L65" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -343,13 +436,22 @@ window.addEventListener('DOMContentLoaded', main);
   <span class="Keyword">of</span> <span class="Identifier">success</span><span class="Other">:</span>
     <span class="Identifier">value</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">T</span>                <span class="Comment">## The value of the successful parse.</span>
   <span class="Keyword">of</span> <span class="Identifier">failure</span><span class="Other">:</span>
-    <span class="Identifier">expected</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span>   <span class="Comment">## The error message of the failed parse.</span>
-  <span class="Identifier">tail</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>              <span class="Comment">## The remaining unparsed input, or all input when failed.</span>
+    <span class="Identifier">expected</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span>   <span class="Comment">## A `seq` of expected values for a failed parse.</span>
+  <span class="Identifier">tail</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>              <span class="Comment">## The remaining unparsed input.</span>
   <span class="Identifier">fromInput</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>         <span class="Comment">## The input from which this result was generated.</span>
   </pre></dt>
 <dd>
 
-The result of a parser run.
+<p>The result of a parser run.</p>
+<p>See also:</p>
+<ul class="simple"><li><a class="reference external" href="#error,ParseResult">error</a></li>
+<li><a class="reference external" href="#raiseIfFailed.t,ParseResult">raiseIfFailed</a></li>
+</ul>
+
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L76"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L76" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -359,6 +461,10 @@ The result of a parser run.
 <dd>
 
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L75"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L75" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -372,6 +478,10 @@ The result of a parser run.
 <dd>
 
 A parser that expects one ASCII alphanumeric character.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L458"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L458" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -380,6 +490,10 @@ A parser that expects one ASCII alphanumeric character.
 <dd>
 
 A parser that succeeds for one character of any non-empty input.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L454"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L454" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -388,6 +502,10 @@ A parser that succeeds for one character of any non-empty input.
 <dd>
 
 A parser that expects one ASCII digit character.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L457"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L457" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -396,6 +514,10 @@ A parser that expects one ASCII digit character.
 <dd>
 
 A parser that fails if there is any remaining input.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L453"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L453" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -404,6 +526,10 @@ A parser that fails if there is any remaining input.
 <dd>
 
 A parser that expects one ASCII alphabetical character.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L456"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L456" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -412,6 +538,10 @@ A parser that expects one ASCII alphabetical character.
 <dd>
 
 A parser that expects at least one whitespace character.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L455"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L455" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -429,6 +559,10 @@ A parser that expects at least one whitespace character.
 <ul class="simple"><li><a class="reference external" href="#chain.t,Parser[T],Parser[T],varargs[Parser[T]]">chain</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L248"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L248" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -437,6 +571,10 @@ A parser that expects at least one whitespace character.
 <dd>
 
 Same as <a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a>, but merges <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt>s when both parsers already are.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L272"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L272" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -445,6 +583,10 @@ Same as <a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a
 <dd>
 
 Same as <a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a>, but merges <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt>s when the left parser is already one.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L258"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L258" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -453,6 +595,10 @@ Same as <a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a
 <dd>
 
 Same as <a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a>, but merges <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt>s when the right parser is already one.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L265"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L265" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -469,6 +615,10 @@ Same as <a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a
 <li><a class="reference external" href="#optional.t,Parser[T]">optional</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L301"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L301" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -477,6 +627,10 @@ Same as <a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a
 <dd>
 
 Expects the parser a number of times in the given range, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L317"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L317" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -487,9 +641,13 @@ Expects the parser a number of times in the given range, returning a <tt class="
 <p>Expects each parser in sequence from left to right, ignoring the result of the right parser if successful.</p>
 <p>See also:</p>
 <ul class="simple"><li><a class="reference external" href="#&gt;&gt;,Parser[T],Parser">&gt;&gt;</a></li>
-<li><a class="reference external" href="#then,Parser,Parser">then</a></li>
+<li><a class="reference external" href="#skip.t,Parser,Parser">skip</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L279"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L279" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -500,9 +658,13 @@ Expects the parser a number of times in the given range, returning a <tt class="
 <p>Expects each parser in sequence from left to right, ignoring the result of the left parser if successful.</p>
 <p>See also:</p>
 <ul class="simple"><li><a class="reference external" href="#&lt;&lt;,Parser[T],Parser">&lt;&lt;</a></li>
-<li><a class="reference external" href="#skip,Parser,Parser">skip</a></li>
+<li><a class="reference external" href="#then.t,Parser,Parser">then</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L290"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L290" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -515,6 +677,10 @@ Expects the parser a number of times in the given range, returning a <tt class="
 <ul class="simple"><li><a class="reference external" href="#oneOf.t,Parser[T],Parser[T],varargs[Parser[T]]">oneOf</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L236"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L236" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -528,6 +694,10 @@ Expects the parser a number of times in the given range, returning a <tt class="
 <li><a class="reference external" href="#regex,string">regex</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L189"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L189" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -536,14 +706,26 @@ Expects the parser a number of times in the given range, returning a <tt class="
 <dd>
 
 Creates a parser matching any one character from the given string.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L199"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L199" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
-<div id="error,ParseResult[T]">
-<dt><pre><span class="Keyword">proc</span> <a href="#error%2CParseResult%5BT%5D"><span class="Identifier">error</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">result1</span><span class="Other">:</span> <a href="honeycomb.html#ParseResult"><span class="Identifier">ParseResult</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span></pre></dt>
+<div id="error,ParseResult">
+<dt><pre><span class="Keyword">func</span> <a href="#error%2CParseResult"><span class="Identifier">error</span></a><span class="Other">(</span><span class="Identifier">result1</span><span class="Other">:</span> <a href="honeycomb.html#ParseResult"><span class="Identifier">ParseResult</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span></pre></dt>
 <dd>
 
-Stringify the <tt class="docutils literal"><span class="pre"><span class="Identifier">expected</span></span></tt> from a failed <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt>. Returns an empty string if passed a successful result.
+<p>Generate an error message from a failed <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt>. Returns an empty string if passed a successful result.</p>
+<p>See also:</p>
+<ul class="simple"><li><a class="reference external" href="#raiseIfFailed.t,ParseResult">raiseIfFailed</a></li>
+</ul>
+
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L120"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L120" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -556,6 +738,22 @@ Stringify the <tt class="docutils literal"><span class="pre"><span class="Identi
 <ul class="simple"><li><a class="reference external" href="#result.t,Parser,T">result</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L220"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L220" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
+</div>
+<div id="parse,Parser[T],string">
+<dt><pre><span class="Keyword">proc</span> <a href="#parse%2CParser%5BT%5D%2Cstring"><span class="Identifier">parse</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">input</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="honeycomb.html#ParseResult"><span class="Identifier">ParseResult</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
+<dd>
+
+Execute a parser on the given <tt class="docutils literal"><span class="pre"><span class="Identifier">input</span></span></tt>.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L115"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L115" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -569,6 +767,10 @@ Stringify the <tt class="docutils literal"><span class="pre"><span class="Identi
 <li><a class="reference external" href="#c,char">c</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L205"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L205" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -582,6 +784,10 @@ Stringify the <tt class="docutils literal"><span class="pre"><span class="Identi
 <li><a class="reference external" href="#regex,string">regex</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L179"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L179" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -595,6 +801,10 @@ Stringify the <tt class="docutils literal"><span class="pre"><span class="Identi
 <dd>
 
 Implicitly converts <tt class="docutils literal"><span class="pre"><span class="Identifier">char</span></span></tt> parsers to <tt class="docutils literal"><span class="pre"><span class="Identifier">string</span></span></tt> parsers for ease of use.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L436"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L436" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -604,12 +814,16 @@ Implicitly converts <tt class="docutils literal"><span class="pre"><span class="
 <h1><a class="toc-backref" href="#17">Macros</a></h1>
 <dl class="item">
 <div id="applyParser.m,untyped,untyped,untyped">
-<dt><pre><span class="Keyword">macro</span> <a href="#applyParser.m%2Cuntyped%2Cuntyped%2Cuntyped"><span class="Identifier">applyParser</span></a><span class="Other">(</span><span class="Identifier">parser</span><span class="Other">,</span> <span class="Identifier">input</span><span class="Other">,</span> <span class="Identifier">failType</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">)</span></pre></dt>
+<dt><pre><span class="Keyword">macro</span> <a href="#applyParser.m%2Cuntyped%2Cuntyped%2Cuntyped"><span class="Identifier">applyParser</span></a><span class="Other">(</span><span class="Identifier">parser</span><span class="Other">,</span> <span class="Identifier">input</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">)</span></pre></dt>
 <dd>
 
 <p>Applies the given parser, evaluating to its result if successful or returning from the containing function if failed.</p>
 <p>This is primarily a tool for simplifying the creation of custom combinators, and should only be used if you know what you're doing. It is only designed to function properly in the context of a block passed to <a class="reference external" href="#createParserTo.t,typedesc,untyped">createParserTo</a>, and will raise a compile warning if used outside of this module.</p>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L164"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L164" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -624,13 +838,17 @@ Implicitly converts <tt class="docutils literal"><span class="pre"><span class="
 
 <p>Expects the parser <tt class="docutils literal"><span class="pre"><span class="Identifier">n</span></span></tt> or more times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
 <p>See also:</p>
-<ul class="simple"><li><a class="reference external" href="#*,Parser[T],Slice[int]">*</a></li>
+<ul class="simple"><li><a class="reference external" href="#*,Parser[T],int">*</a></li>
 <li><a class="reference external" href="#times.t,Parser,auto">times</a></li>
 <li><a class="reference external" href="#many.t,Parser[T]">many</a></li>
 <li><a class="reference external" href="#atMost.t,Parser[T],int">atMost</a></li>
 <li><a class="reference external" href="#optional.t,Parser[T]">optional</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L333"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L333" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -640,13 +858,29 @@ Implicitly converts <tt class="docutils literal"><span class="pre"><span class="
 
 <p>Expects the parser <tt class="docutils literal"><span class="pre"><span class="Identifier">n</span></span></tt> or fewer times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
 <p>See also:</p>
-<ul class="simple"><li><a class="reference external" href="#*,Parser[T],Slice[int]">*</a></li>
+<ul class="simple"><li><a class="reference external" href="#*,Parser[T],int">*</a></li>
 <li><a class="reference external" href="#times.t,Parser,auto">times</a></li>
 <li><a class="reference external" href="#many.t,Parser[T]">many</a></li>
 <li><a class="reference external" href="#atLeast.t,Parser[T],int">atLeast</a></li>
 <li><a class="reference external" href="#optional.t,Parser[T]">optional</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L344"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L344" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
+</div>
+<div id="become.t,Parser[T],Parser[T]">
+<dt><pre><span class="Keyword">template</span> <a href="#become.t%2CParser%5BT%5D%2CParser%5BT%5D"><span class="Identifier">become</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">b</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span></pre></dt>
+<dd>
+
+Initialize a forward-declared parser created with <a class="reference external" href="#fwdcl.t">fwdcl</a>, after which it can be used.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L429"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L429" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -659,6 +893,10 @@ Implicitly converts <tt class="docutils literal"><span class="pre"><span class="
 <ul class="simple"><li><a class="reference external" href="#&amp;,Parser[T],Parser[T]">&amp;</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L400"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L400" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -667,6 +905,10 @@ Implicitly converts <tt class="docutils literal"><span class="pre"><span class="
 <dd>
 
 Same as <a class="reference external" href="#createParserTo.t,typedesc,untyped">createParserTo</a>, but always creates a <tt class="docutils literal"><span class="pre"><span class="Identifier">Parser</span><span class="Punctuation">[</span><span class="Identifier">string</span><span class="Punctuation">]</span></span></tt>.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L160"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L160" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -678,10 +920,14 @@ Same as <a class="reference external" href="#createParserTo.t,typedesc,untyped">
 <p>Inside the given block, <tt class="docutils literal"><span class="pre"><span class="Identifier">input</span></span></tt> is the input string to be parsed. The block should evaluate to a <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt> created by either <tt class="docutils literal"><span class="pre"><span class="Identifier">succeed</span></span></tt> or <tt class="docutils literal"><span class="pre"><span class="Identifier">fail</span></span></tt>, with the <tt class="docutils literal"><span class="pre"><span class="Identifier">tail</span></span></tt> consisting of the remaining unparsed input.</p>
 <p>See also:</p>
 <ul class="simple"><li><a class="reference external" href="#succeed.t,string,T,string">succeed</a></li>
-<li><a class="reference external" href="#fail.t,string,string">fail</a></li>
+<li><a class="reference external" href="#fail.t,string,seq[string]">fail</a></li>
 <li><a class="reference external" href="#createParser.t,untyped">createParser</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L147"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L147" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -696,6 +942,10 @@ Same as <a class="reference external" href="#createParserTo.t,typedesc,untyped">
 <li><a class="reference external" href="#createParser.t,untyped">createParser</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L101"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L101" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -704,6 +954,25 @@ Same as <a class="reference external" href="#createParserTo.t,typedesc,untyped">
 <dd>
 
 Remove one level of nested <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt>s from a parser.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L377"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L377" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
+</div>
+<div id="fwdcl.t">
+<dt><pre><span class="Keyword">template</span> <a href="#fwdcl.t"><span class="Identifier">fwdcl</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
+<dd>
+
+<p>Create a forward-declared parser.</p>
+<p>A forward-declared parser can be used normally, but must be initialized with <a class="reference external" href="#become.t,Parser[T],Parser[T]">become</a> before you can call <a class="reference external" href="#parse,Parser[T],string">parse</a> on it. A variable containing a forward-declared parser must be declared with <tt class="docutils literal"><span class="pre"><span class="Keyword">var</span></span></tt> for <tt class="docutils literal"><span class="pre"><span class="Identifier">become</span></span></tt> to function.</p>
+<p>You should only use a forward-declared parser if you absolutely need one. Their primary use case is for creating mutually recursive definitions. If you don't need to use the parser in combinators before it's possible to define it, use <a class="reference external" href="#createParserTo.t,typedesc,untyped">createParserTo</a> instead.</p>
+
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L421"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L421" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -712,6 +981,10 @@ Remove one level of nested <tt class="docutils literal"><span class="pre"><span 
 <dd>
 
 Joins a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span><span class="Punctuation">[</span><span class="Identifier">string</span><span class="Punctuation">]</span></span></tt> parser into a single string.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L384"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L384" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -721,6 +994,10 @@ Joins a <tt class="docutils literal"><span class="pre"><span class="Identifier">
 <dd>
 
 Joins a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span><span class="Punctuation">[</span><span class="Identifier">string</span><span class="Punctuation">]</span></span></tt> parser into a single string, using the given delimiter.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L388"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L388" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -730,13 +1007,17 @@ Joins a <tt class="docutils literal"><span class="pre"><span class="Identifier">
 
 <p>Expects the parser 0 or more times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
 <p>See also:</p>
-<ul class="simple"><li><a class="reference external" href="#*,Parser[T],Slice[int]">*</a></li>
+<ul class="simple"><li><a class="reference external" href="#*,Parser[T],int">*</a></li>
 <li><a class="reference external" href="#times.t,Parser,auto">times</a></li>
 <li><a class="reference external" href="#atLeast.t,Parser[T],int">atLeast</a></li>
 <li><a class="reference external" href="#atMost.t,Parser[T],int">atMost</a></li>
 <li><a class="reference external" href="#optional.t,Parser[T]">optional</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L355"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L355" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -749,6 +1030,10 @@ Joins a <tt class="docutils literal"><span class="pre"><span class="Identifier">
 <ul class="simple"><li><a class="reference external" href="#|,Parser[T],Parser[T]">|</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L409"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L409" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -758,13 +1043,31 @@ Joins a <tt class="docutils literal"><span class="pre"><span class="Identifier">
 
 <p>Expects the parser 0 or 1 times, returning a <tt class="docutils literal"><span class="pre"><span class="Identifier">seq</span></span></tt> of the matches.</p>
 <p>See also:</p>
-<ul class="simple"><li><a class="reference external" href="#*,Parser[T],Slice[int]">*</a></li>
+<ul class="simple"><li><a class="reference external" href="#*,Parser[T],int">*</a></li>
 <li><a class="reference external" href="#times.t,Parser,auto">times</a></li>
 <li><a class="reference external" href="#many.t,Parser[T]">many</a></li>
 <li><a class="reference external" href="#atLeast.t,Parser[T],int">atLeast</a></li>
 <li><a class="reference external" href="#atMost.t,Parser[T],int">atMost</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L366"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L366" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
+</div>
+<div id="raiseIfFailed.t,ParseResult">
+<dt><pre><span class="Keyword">template</span> <a href="#raiseIfFailed.t%2CParseResult"><span class="Identifier">raiseIfFailed</span></a><span class="Other">(</span><span class="Identifier">result1</span><span class="Other">:</span> <a href="honeycomb.html#ParseResult"><span class="Identifier">ParseResult</span></a><span class="Other">)</span></pre></dt>
+<dd>
+
+See also:<ul class="simple"><li><a class="reference external" href="#error,ParseResult">error</a></li>
+</ul>
+
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L137"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L137" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -777,6 +1080,10 @@ Joins a <tt class="docutils literal"><span class="pre"><span class="Identifier">
 <ul class="simple"><li><a class="reference external" href="#map,Parser[T],proc(T)">map</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L229"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L229" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -785,6 +1092,10 @@ Joins a <tt class="docutils literal"><span class="pre"><span class="Identifier">
 <dd>
 
 Textual alternative to <a class="reference external" href="#&lt;&lt;,Parser[T],Parser">&lt;&lt;</a>.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L397"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L397" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -794,11 +1105,15 @@ Textual alternative to <a class="reference external" href="#&lt;&lt;,Parser[T],P
 
 <p>Creates a successful <tt class="docutils literal"><span class="pre"><span class="Identifier">ParseResult</span></span></tt>.</p>
 <p>See also:</p>
-<ul class="simple"><li><a class="reference external" href="#fail.t,string,string">fail</a></li>
+<ul class="simple"><li><a class="reference external" href="#fail.t,string,seq[string]">fail</a></li>
 <li><a class="reference external" href="#createParserTo.t,typedesc,untyped">createParserTo</a></li>
 <li><a class="reference external" href="#createParser.t,untyped">createParser</a></li>
 </ul>
 
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L92"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L92" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -807,6 +1122,10 @@ Textual alternative to <a class="reference external" href="#&lt;&lt;,Parser[T],P
 <dd>
 
 Textual alternative to <a class="reference external" href="#&gt;&gt;,Parser[T],Parser">&gt;&gt;</a>.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L396"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L396" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -814,7 +1133,11 @@ Textual alternative to <a class="reference external" href="#&gt;&gt;,Parser[T],P
 <dt><pre><span class="Keyword">template</span> <a href="#times.t%2CParser%2Cauto"><span class="Identifier">times</span></a><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <a href="honeycomb.html#Parser"><span class="Identifier">Parser</span></a><span class="Other">;</span> <span class="Identifier">n</span><span class="Other">:</span> <span class="Identifier">auto</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">auto</span></pre></dt>
 <dd>
 
-Textual alternative to <a class="reference external" href="#*,Parser[T],Slice[int]">*</a>.
+Textual alternative to <a class="reference external" href="#*,Parser[T],int">*</a>.
+&nbsp;&nbsp;<a
+href="https://github.com/katrinakitten/honeycomb/tree/master/src/honeycomb.nim#L398"
+class="link-seesrc" target="_blank">Source</a>
+&nbsp;&nbsp;<a href="https://github.com/katrinakitten/honeycomb/edit/devel/src/honeycomb.nim#L398" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 </div>
@@ -828,7 +1151,7 @@ Textual alternative to <a class="reference external" href="#*,Parser[T],Slice[in
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2021-12-22 04:00:26 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2021-12-27 00:10:19 UTC</small>
       </div>
     </div>
   </div>
