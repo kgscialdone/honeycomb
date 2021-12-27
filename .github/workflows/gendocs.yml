@@ -21,6 +21,6 @@ jobs:
           git add docs
           git stash
           git checkout docs --
-          git stash show -p | git apply && git stash drop
+          git merge --squash --strategy-option=theirs stash
           git commit -m "Update documentation"
           git push
