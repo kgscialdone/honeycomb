@@ -21,6 +21,6 @@ jobs:
           git add docs
           git stash
           git checkout docs --
-          git stash pop
+          git checkout stash --
           git commit -m "Update documentation"
           git push
