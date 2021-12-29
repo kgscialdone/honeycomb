@@ -1,7 +1,7 @@
 # Honeycomb v0.1.0
 # Created by KatrinaKitten
 
-## Honeycomb is a parser combinator library written in pure Nim. It's designed to be simple, straightforward, and easy to expand.
+## Honeycomb is a parser combinator library written in pure Nim. It's designed to be simple, straightforward, and easy to expand, while relying on zero dependencies from outside of Nim's standard library.
 ##
 ## Honeycomb was heavily inspired by the excellent Python library [parsy](https://github.com/python-parsy/parsy), as well as the existing but unmaintained [combparser](https://github.com/PMunch/combparser).
 
@@ -9,7 +9,7 @@ runnableExamples:
   let 
     parser  = ((s("Hello") | s("Greetings")) << c(',') << whitespace) & (regex(r"\w+") << c("!."))
     result1 = parser.parse("Hello, world!")
-    result2 = parser.parse("Greetings, peasants!")
+    result2 = parser.parse("Greetings, peasants.")
 
   assert result1.kind  == success
   assert result1.value == @["Hello", "world"]
@@ -17,6 +17,12 @@ runnableExamples:
   assert result2.kind  == success
   assert result2.value == @["Greetings", "peasants"]
 
+## Honeycomb supports the following key features:
+## - Predefined parsers and parser constructors for numerous basic parsing needs
+## - An extensive library of combinators with which to combine them
+## - Support for manually defining custom parsers / combinators
+## - Forward-declared parsers to support mutually recursive parser definitions
+## 
 ## Key functions and types
 ## ***********************
 ##
@@ -64,7 +70,6 @@ runnableExamples:
 ## Advanced parser construction tools
 ## ==================================
 ## - [createParser](#createParser.t,typedesc,untyped) - manually create a parser by defining its processing function
-## - [createParser](#createParser.t,untyped) - shortcut for `createParser(string)`
 ## - [succeed](#succeed.t,string,T,string) - create a successful `ParseResult`
 ## - [fail](#fail.t,string,seq[string]) - create a failed `ParseResult`
 ## - [applyParser](#applyParser.m,untyped,untyped,untyped) - apply a parser in the definition of a combinator, failing if the given parser fails
@@ -99,6 +104,7 @@ type
     ## See also:
     ## - [error](#error,ParseResult)
     ## - [raiseIfFailed](#raiseIfFailed.t,ParseResult)
+    ## - [lineInfo](#lineInfo,ParseResult)
 
     case kind*: ParseResultKind
     of success: value*: T                 ## The value of the successful parse.
@@ -124,6 +130,10 @@ proc parse*[T](p: Parser[T], input: string): ParseResult[T] =
 
 func lineInfo*(result1: ParseResult): (int,int) =
   ## Get the line and column at which a `ParseResult`'s tail begins.
+  ##
+  ## See also:
+  ## - [error](#error,ParseResult,bool)
+  ## - [raiseIfFailed](#raiseIfFailed.t,ParseResult)
   let 
     prior   = result1.fromInput[0..^result1.tail.len+1]
     lineNum = prior.countLines
@@ -138,6 +148,7 @@ func error*(result1: ParseResult, showPos: bool = true): string =
   ##
   ## See also:
   ## - [raiseIfFailed](#raiseIfFailed.t,ParseResult)
+  ## - [lineInfo](#lineInfo,ParseResult)
   runnableExamples:
     let 
       parser = s("Hello, world!")
@@ -159,7 +170,8 @@ template raiseIfFailed*(result1: ParseResult) =
   ## Raise an exception if the given `ParseResult` is failed.
   ##
   ## See also:
-  ## - [error](#error,ParseResult)
+  ## - [error](#error,ParseResult,bool)
+  ## - [lineInfo](#lineInfo,ParseResult)
   runnableExamples:
     let 
       parser = s("Hello, world!")
@@ -362,7 +374,6 @@ template mapEach*[T,U](a: Parser[seq[T]], fn: proc(x: T): U): Parser[seq[U]] =
   ## - [result](#result.t,Parser,T)
   runnableExamples:
     from std/strutils import toUpperAscii
-    from std/sugar import `=>`
     let 
       parser = (s("Hello, ") & s("world!")).mapEach(toUpperAscii)
       result = parser.parse("Hello, world!")
