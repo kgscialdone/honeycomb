@@ -1,5 +1,9 @@
 # 🍯 Honeycomb
 
+[![tests](https://github.com/KatrinaKitten/honeycomb/actions/workflows/test.yml/badge.svg)](https://github.com/KatrinaKitten/honeycomb/actions/workflows/test.yml)
+[![docs](https://github.com/KatrinaKitten/honeycomb/actions/workflows/gendocs.yml/badge.svg)](https://github.com/KatrinaKitten/honeycomb/actions/workflows/gendocs.yml)
+[![pages-build-deployment](https://github.com/KatrinaKitten/honeycomb/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/KatrinaKitten/honeycomb/actions/workflows/pages/pages-build-deployment)
+
 Honeycomb is a parser combinator library written in pure Nim. It's designed to be simple, straightforward, and easy to expand, while relying on zero dependencies from outside of Nim's standard library.
 
 Honeycomb was heavily inspired by the excellent Python library [parsy](https://github.com/python-parsy/parsy), as well as the existing but unmaintained [combparser](https://github.com/PMunch/combparser).
