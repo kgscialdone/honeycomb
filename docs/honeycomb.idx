@@ -1,0 +1,61 @@
+Parser	honeycomb.html#Parser	honeycomb: Parser	
+success	honeycomb.html#success	ParseResultKind.success	
+failure	honeycomb.html#failure	ParseResultKind.failure	
+ParseResultKind	honeycomb.html#ParseResultKind	honeycomb: ParseResultKind	
+ParseResult	honeycomb.html#ParseResult	honeycomb: ParseResult	
+ParseError	honeycomb.html#ParseError	honeycomb: ParseError	
+parse	honeycomb.html#parse,Parser[T],string	honeycomb: parse[T](p: Parser[T]; input: string): ParseResult[T]	
+lineInfo	honeycomb.html#lineInfo,ParseResult	honeycomb: lineInfo(result1: ParseResult): (int, int)	
+error	honeycomb.html#error,ParseResult,bool	honeycomb: error(result1: ParseResult; showPos: bool = true): string	
+raiseIfFailed	honeycomb.html#raiseIfFailed.t,ParseResult	honeycomb: raiseIfFailed(result1: ParseResult)	
+createParser	honeycomb.html#createParser.t,typedesc,untyped	honeycomb: createParser(T: typedesc; parser_body: untyped): Parser[T]	
+applyParser	honeycomb.html#applyParser.m,untyped,untyped,untyped	honeycomb: applyParser(parser, input, T: untyped)	
+s	honeycomb.html#s,string	honeycomb: s(expect: string): Parser[string]	
+c	honeycomb.html#c,char	honeycomb: c(expect: char): Parser[char]	
+c	honeycomb.html#c,string	honeycomb: c(expect: string): Parser[char]	
+c	honeycomb.html#c,Slice[char]	honeycomb: c(expect: Slice[char]): Parser[char]	
+regex	honeycomb.html#regex,string	honeycomb: regex(expect: string): Parser[string]	
+nop	honeycomb.html#nop	honeycomb: nop[T](): Parser[T]	
+map	honeycomb.html#map,Parser[T],proc(T)	honeycomb: map[T, U](a: Parser[T]; fn: proc (x: T): U): Parser[U]	
+mapEach	honeycomb.html#mapEach.t,Parser[seq[T]],proc(T)	honeycomb: mapEach[T, U](a: Parser[seq[T]]; fn: proc (x: T): U): Parser[seq[U]]	
+result	honeycomb.html#result.t,Parser,T	honeycomb: result[T](a: Parser; r: T): Parser[T]	
+`|`	honeycomb.html#|,Parser[T],Parser[T]	honeycomb: `|`[T](a, b: Parser[T]): Parser[T]	
+`&amp;`	honeycomb.html#&,Parser[seq[T]],Parser[seq[T]]	honeycomb: `&amp;`[T](a, b: Parser[seq[T]]): Parser[seq[T]]	
+`&amp;`	honeycomb.html#&.t,Parser[T],Parser[T]	honeycomb: `&amp;`[T](a, b: Parser[T]): Parser[seq[T]]	
+`&amp;`	honeycomb.html#&.t,Parser[seq[T]],Parser[T]	honeycomb: `&amp;`[T](a: Parser[seq[T]]; b: Parser[T]): Parser[seq[T]]	
+`&amp;`	honeycomb.html#&.t,Parser[T],Parser[seq[T]]	honeycomb: `&amp;`[T](a: Parser[T]; b: Parser[seq[T]]): Parser[seq[T]]	
+`&lt;&lt;`	honeycomb.html#<<,Parser[T],Parser	honeycomb: `&lt;&lt;`[T](a: Parser[T]; b: Parser): Parser[T]	
+`&gt;&gt;`	honeycomb.html#>>,Parser,Parser[T]	honeycomb: `&gt;&gt;`[T](a: Parser; b: Parser[T]): Parser[T]	
+`*`	honeycomb.html#*,Parser[T],int	honeycomb: `*`[T](a: Parser[T]; n: int): Parser[seq[T]]	
+`*`	honeycomb.html#*,Parser[T],Slice[int]	honeycomb: `*`[T](a: Parser[T]; n: Slice[int]): Parser[seq[T]]	
+`!`	honeycomb.html#!,Parser[T]	honeycomb: `!`[T](a: Parser[T]): Parser[T]	
+atLeast	honeycomb.html#atLeast.t,Parser[T],int	honeycomb: atLeast[T](a: Parser[T]; n: int): Parser[seq[T]]	
+atMost	honeycomb.html#atMost.t,Parser[T],int	honeycomb: atMost[T](a: Parser[T]; n: int): Parser[seq[T]]	
+many	honeycomb.html#many.t,Parser[T]	honeycomb: many[T](a: Parser[T]): Parser[seq[T]]	
+optional	honeycomb.html#optional.t,Parser[T]	honeycomb: optional[T](a: Parser[T]): Parser[seq[T]]	
+flatten	honeycomb.html#flatten.t,Parser[seq[seq[T]]]	honeycomb: flatten[T](p: Parser[seq[seq[T]]]): Parser[seq[T]]	
+join	honeycomb.html#join.t,Parser[seq[]],string	honeycomb: join(a: Parser[seq[string or char]]; delim: string or char = &quot;&quot;): Parser[string]	
+asString	honeycomb.html#asString.t,Parser	honeycomb: asString(a: Parser): Parser[string]	
+asSeq	honeycomb.html#asSeq.t,Parser[T]	honeycomb: asSeq[T](a: Parser[T]): Parser[seq[T]]	
+desc	honeycomb.html#desc,Parser[T],string	honeycomb: desc[T](a: Parser[T]; description: string): Parser[T]	
+then	honeycomb.html#then.t,Parser,Parser	honeycomb: then(a, b: Parser): auto	
+skip	honeycomb.html#skip.t,Parser,Parser	honeycomb: skip(a, b: Parser): auto	
+times	honeycomb.html#times.t,Parser,auto	honeycomb: times(a: Parser; n: auto): auto	
+negla	honeycomb.html#negla.t,Parser	honeycomb: negla(a: Parser): auto	
+chain	honeycomb.html#chain.t,Parser[T],Parser[T],varargs[Parser[T]]	honeycomb: chain[T](p1, p2: Parser[T]; ps: varargs[Parser[T]]): Parser[seq[T]]	
+oneOf	honeycomb.html#oneOf.t,Parser[T],Parser[T],varargs[Parser[T]]	honeycomb: oneOf[T](p1, p2: Parser[T]; ps: varargs[Parser[T]]): Parser[T]	
+fwdcl	honeycomb.html#fwdcl.t	honeycomb: fwdcl[T](): var Parser[T]	
+become	honeycomb.html#become.t,Parser[T],Parser[T]	honeycomb: become[T](a: var Parser[T]; b: Parser[T])	
+asString	honeycomb.html#asString.c,Parser[char]	honeycomb: asString(a: Parser[char]): Parser[string]	
+eof	honeycomb.html#eof	honeycomb: eof	
+anyChar	honeycomb.html#anyChar	honeycomb: anyChar	
+whitespace	honeycomb.html#whitespace	honeycomb: whitespace	
+letter	honeycomb.html#letter	honeycomb: letter	
+digit	honeycomb.html#digit	honeycomb: digit	
+alphanumeric	honeycomb.html#alphanumeric	honeycomb: alphanumeric	
+Key functions and types	honeycomb.html#key-functions-and-types	 Key functions and types	
+Core parser constructors	honeycomb.html#key-functions-and-types-core-parser-constructors	  Core parser constructors	
+Predefined parsers	honeycomb.html#key-functions-and-types-predefined-parsers	  Predefined parsers	
+Parser combinators	honeycomb.html#key-functions-and-types-parser-combinators	  Parser combinators	
+Execution and results	honeycomb.html#key-functions-and-types-execution-and-results	  Execution and results	
+Advanced parser construction tools	honeycomb.html#key-functions-and-types-advanced-parser-construction-tools	  Advanced parser construction tools	
