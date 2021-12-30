@@ -706,3 +706,15 @@ suite "integration examples":
     check result2.error     == "[1:3] Expected valid expression"
     check result2.tail      == "+ "
     check result2.fromInput == "1 + "
+
+suite "reported issues":
+
+  test "#3: atLeast and atMost together makes the parser hang":
+    let
+      parser = digit.atMost(3).atLeast(4)
+      result = parser.parse("255314")
+
+    check result.kind      == success
+    check result.value     == @[@['2','5','5'], @['3','1','4'], @[], @[]]
+    check result.tail      == ""
+    check result.fromInput == "255314"
