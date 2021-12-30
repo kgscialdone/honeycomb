@@ -440,7 +440,7 @@ func `|`*[T](a, b: Parser[T]): Parser[T] =
     fail(input, result1.expected & result2.expected, input)
 
 func `&`*[T](a, b: Parser[seq[T]]): Parser[seq[T]] =
-  ## Expects each parser in sequence from left to right, creating a `seq` of their results.
+  ## Expects each parser in sequence from left to right, creating a `seq` of their results. If one or both of the parsers already results in a `seq` of the other's type, the two `seq`s will be merged.
   ## 
   ## See also:
   ## - [chain](#chain.t,Parser[T],Parser[T],varargs[Parser[T]]) - textual equivalent to this operator
@@ -509,6 +509,8 @@ func `>>`*[T](a: Parser, b: Parser[T]): Parser[T] =
 
 func `*`*[T](a: Parser[T], n: int): Parser[seq[T]] =
   ## Expects the parser a given number of times, returning a `seq` of the matches. Also supports slices as ranges of valid amounts (see [*](#*.t,Parser[T],Slice[int])).
+  ##
+  ## Note that this will succeed early if the given parser succeeds but doesn't consume any input, in order to prevent infinite loops caused by parsers like [nop](#nop) or [atMost](#atMost.t,Parser[T],int). This means it may not work correctly on parsers with non-deterministic behavior or which use/modify external state; this is intentionally undefined behavior.
   ##
   ## See also:
   ## - [times](#times.t,Parser,auto) - textual equivalent to this operator
