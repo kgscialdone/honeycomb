@@ -1,4 +1,4 @@
-# Honeycomb v0.1.0
+# Honeycomb v0.1.1
 # Created by KatrinaKitten
 
 ## Honeycomb is a parser combinator library written in pure Nim. It's designed to be simple, straightforward, and easy to expand, while relying on zero dependencies from outside of Nim's standard library.
