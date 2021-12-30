@@ -295,6 +295,22 @@ suite "general combinators":
     check result2.tail      == "Hello, world!"
     check result2.fromInput == "Hello, world!"
 
+  test "filter":
+    let
+      parser  = digit.asString.atLeast(1).mapEach(parseInt).filter(x => x >= 5)
+      result1 = parser.parse("0918273654")
+      result2 = parser.parse("Hello, world!")
+
+    check result1.kind      == success
+    check result1.value     == @[9,8,7,6,5]
+    check result1.tail      == ""
+    check result1.fromInput == "0918273654"
+
+    check result2.kind      == failure
+    check result2.error     == "[1:1] Expected character from 0..9"
+    check result2.tail      == "Hello, world!"
+    check result2.fromInput == "Hello, world!"
+
   test "oneOf":
     let parsers = [
       s("Hello") | s("Greetings"),
@@ -539,6 +555,22 @@ suite "general combinators":
       result2 = parser.parse("")
 
     check result1.kind      == success
+    check result1.value     == "Hello"
+    check result1.tail      == ""
+    check result1.fromInput == "Hello"
+
+    check result2.kind      == success
+    check result2.value     == ""
+    check result2.tail      == ""
+    check result2.fromInput == ""
+
+  test "orEmpty":
+    let 
+      parser  = s("Hello").orEmpty()
+      result1 = parser.parse("Hello")
+      result2 = parser.parse("")
+
+    check result1.kind      == success
     check result1.value     == @["Hello"]
     check result1.tail      == ""
     check result1.fromInput == "Hello"
@@ -667,7 +699,7 @@ suite "integration examples":
     var expression = fwdcl[float]()
     let
       padding = regex(r"\s*")
-      number  = (digit.atLeast(1) & (c('.') & digit.atLeast(1)).optional).flatten.join.map(parseFloat)
+      number  = (digit.atLeast(1) & (c('.') & digit.atLeast(1)).optional).join.map(parseFloat)
       parens  = c('(') >> padding >> expression << padding << c(')')
       operand = number | parens
 
@@ -706,3 +738,15 @@ suite "integration examples":
     check result2.error     == "[1:3] Expected valid expression"
     check result2.tail      == "+ "
     check result2.fromInput == "1 + "
+
+suite "reported issues":
+
+  test "#3: atLeast and atMost together makes the parser hang":
+    let
+      parser = digit.atMost(3).atLeast(4).removeEmpty
+      result = parser.parse("255314")
+
+    check result.kind      == success
+    check result.value     == @[@['2','5','5'], @['3','1','4']]
+    check result.tail      == ""
+    check result.fromInput == "255314"
