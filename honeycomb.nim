@@ -508,7 +508,7 @@ func `>>`*[T](a: Parser, b: Parser[T]): Parser[T] =
     return succeed(input, result2.value, result2.tail)
 
 func `*`*[T](a: Parser[T], n: int): Parser[seq[T]] =
-  ## Expects the parser a given number of times, returning a `seq` of the matches.
+  ## Expects the parser a given number of times, returning a `seq` of the matches. Also supports slices as ranges of valid amounts (see [*](#*.t,Parser[T],Slice[int])).
   ##
   ## See also:
   ## - [times](#times.t,Parser,auto) - textual equivalent to this operator
@@ -528,34 +528,21 @@ func `*`*[T](a: Parser[T], n: int): Parser[seq[T]] =
     of 0: return nop[seq[T]]()
     of 1: return a.asSeq
     else: 
-      let parsers = a.repeat(n)
-      return parsers[1..^1].foldl(a & b, parsers[0].asSeq)
+      createParser(seq[T]):
+        var 
+          result1  = applyParser(a, input, seq[T])
+          outputs  = @[result1.value]
+          lastTail = result1.tail
+        for i in countup(2, n):
+          result1 = applyParser(a, result1.tail, seq[T])
+          if result1.tail == lastTail: break
+          lastTail = result1.tail
+          outputs.add(result1.value)
+        succeed(input, outputs, result1.tail)
 
-func `*`*[T](a: Parser[T], n: Slice[int]): Parser[seq[T]] =
-  ## Expects the parser a number of times in the given range, returning a `seq` of the matches.
-  runnableExamples:
-    let 
-      parser = s("Hello ") * (3..5)
-      result = parser.parse("Hello Hello Hello Hello ")
-
-    assert result.kind  == success
-    assert result.value == @["Hello ", "Hello ", "Hello ", "Hello "]
-
-  createParser(seq[T]):
-    let 
-      initial = a * n.a
-      result1 = applyParser(initial, input, seq[T])
-    var 
-      result2 = a.parse(result1.tail)
-      outputs = newSeq[T]()
-    for i in n.a ..< n.b:
-      if result2.kind == failure: break
-      outputs.add(result2.value)
-      if i < n.b-1: result2 = a.parse(result2.tail)
-
-    case outputs.len:
-    of 0: succeed(input, result1.value, result1.tail)
-    else: succeed(input, result1.value & outputs, result2.tail)
+template `*`*[T](p: Parser[T], n: Slice[int]): Parser[seq[T]] =
+  ## Same as [*](#*,Parser[T],int), but takes a range of possible amounts, expecting at least the lower bound and at most the higher bound.
+  ((p * n.a) & (p.orEmpty * (n.b - n.a))).flatten
 
 func `!`*[T](a: Parser[T]): Parser[T] =
   ## Succeeds if the given parser fails and fails if it succeeds, consuming no input regardless. The resulting value if successful will be the default for type `T`.
