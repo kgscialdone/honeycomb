@@ -53,12 +53,17 @@ runnableExamples:
 ## - [many](#many.t,Parser[T]) - expect a parser 0 or more times
 ## - [atLeast](#atLeast.t,Parser[T],int) - expect a parser at least `n` times
 ## - [atMost](#atMost.t,Parser[T],int) - expect a parser 0 to `n` times
-## - [optional](#optional.t,Parser[T]) - expect a parser 0 or 1 times
+## - [optional](#optional.t,Parser[T]) - expect a parser optionally, returning the default value of its result type if it doesn't match
+## - [orEmpty](#orEmpty.t,Parser[T]) - expect a parser optionally, returning it in a `seq` or an empty `seq` if it doesn't match
 ## - [map](#map,Parser[T],proc(T)) - run a custom function on the value of a successful parse
 ## - [mapEach](#mapEach,Parser[seq[T]],proc(T)) - run a custom function on each value of a successful parse containing a `seq`
 ## - [result](#result.t,Parser,T) - replace the value of a successful parse with a constant value
+## - [filter](#filter.t,Parser[seq[T]],proc(T)) - filter the results of a successful parse by a predicate function
 ## - [flatten](#flatten.t,Parser[seq[seq[T]]]) - remove a level of nested `seq`s from a parser
+## - [removeEmpty](#removeEmpty.t,Parser[seq[seq[T]]]) - remove empty `seq`s from a parser resulting in nested `seqs`
 ## - [desc](#desc,Parser[T],string) - set a custom description to be shown when a parser fails
+## - [asSeq](#asSeq.t,Parser[T]) - wrap a parser's result in a `seq`
+## - [asString](#asString.t,Parser) - convert a parser's result to a `string` via `$`
 ##
 ## Execution and results
 ## =====================
@@ -353,6 +358,7 @@ func map*[T,U](a: Parser[T], fn: proc(x: T): U): Parser[U] =
   ## See also:
   ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
   ## - [result](#result.t,Parser,T)
+  ## - [filter](#filter.t,Parser[seq[T]],proc(T))
   runnableExamples:
     from std/sugar import `=>`
     let 
@@ -372,6 +378,7 @@ template mapEach*[T,U](a: Parser[seq[T]], fn: proc(x: T): U): Parser[seq[U]] =
   ## See also:
   ## - [map](#map,Parser[T],proc(T))
   ## - [result](#result.t,Parser,T)
+  ## - [filter](#filter.t,Parser[seq[T]],proc(T))
   runnableExamples:
     from std/strutils import toUpperAscii
     let 
@@ -389,6 +396,7 @@ template result*[T](a: Parser, r: T): Parser[T] =
   ## See also:
   ## - [map](#map,Parser[T],proc(T))
   ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
+  ## - [filter](#filter.t,Parser[seq[T]],proc(T))
   runnableExamples:
     let 
       parser = s("power level").result(9001)
@@ -398,6 +406,15 @@ template result*[T](a: Parser, r: T): Parser[T] =
     assert result.value == 9001
 
   a.map(x => r)
+
+func filter*[T](a: Parser[seq[T]], fn: proc(x: T): bool): Parser[seq[T]] =
+  ## Filter the results of a successful parse to `seq` by the given predicate, keeping only those results for which it returns `true`.
+  ##
+  ## See also:
+  ## - [map](#map,Parser[T],proc(T))
+  ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
+  ## - [result](#result.t,Parser,T)
+  a.mapEach((x: T) => (if fn(x): @[x] else: newSeq[T]())).flatten
 
 func `|`*[T](a, b: Parser[T]): Parser[T] = 
   ## Succeeds if either parser succeeds, attempting them from left to right.
@@ -592,27 +609,49 @@ template many*[T](a: Parser[T]): Parser[seq[T]] =
   ## - [optional](#optional.t,Parser[T])
   a.atLeast(0)
 
-template optional*[T](a: Parser[T]): Parser[seq[T]] =
-  ## Expects the parser 0 or 1 times, returning a `seq` of the matches.
+template optional*[T](a: Parser[T]): Parser[T] =
+  ## Expects the parser optionally, returning the default value of type `T` if it doesn't match.
   ##
   ## See also:
-  ## - [*](#*,Parser[T],int) / [times](#times.t,Parser,auto)
-  ## - [many](#many.t,Parser[T])
-  ## - [atLeast](#atLeast.t,Parser[T],int)
-  ## - [atMost](#atMost.t,Parser[T],int)
-  a.atMost(1)
+  ## - [orEmpty](#orEmpty.t,Parser[T])
+  a | nop[T]()
+
+template orEmpty*[T](a: Parser[T]): Parser[seq[T]] =
+  # Expects the parser optionally, returning it wrapped in a `seq`, or an empty `seq` if it doesn't match.
+  ##
+  ## See also:
+  ## - [optional](#optional.t,Parser[T])
+  a.asSeq.optional
 
 template flatten*[T](p: Parser[seq[seq[T]]]): Parser[seq[T]] =
   ## Remove one level of nested `seq`s from a parser.
+  ##
+  ## See also:
+  ## - [removeEmpty](#removeEmpty.t,Parser[seq[seq[T]]])
   runnableExamples:
     let
-      parser = digit.atLeast(3).atLeast(1).flatten()
+      parser = digit.atLeast(3).atLeast(1).flatten
       result = parser.parse("127456")
 
     assert result.kind  == success
     assert result.value == @['1', '2', '7', '4', '5', '6']
 
   p.map(x => x.foldl(a & b, newSeq[T]()))
+
+template removeEmpty*[T](p: Parser[seq[seq[T]]]): Parser[seq[seq[T]]] =
+  ## Remove empty `seq`s from a parser returning nested `seq`s.
+  ##
+  ## See also:
+  ## - [flatten](#flatten.t,Parser[seq[seq[T]]])
+  runnableExamples:
+    let
+      parser = digit.atMost(3).atLeast(4).removeEmpty
+      result = parser.parse("127456")
+
+    assert result.kind  == success
+    assert result.value == @[@['1', '2', '7'], @['4', '5', '6']]
+
+  p.filter(x => x.len > 0)
 
 template join*(a: Parser[seq[string or char]], delim: string or char = ""): Parser[string] = 
   ## Joins a `seq[string]` parser into a single string, using the given delimiter.
