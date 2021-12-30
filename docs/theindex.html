@@ -97,7 +97,7 @@ window.addEventListener('DOMContentLoaded', main);
 <li><a class="reference external"
           data-doc-search-tag="honeycomb: `*`[T](a: Parser[T]; n: int): Parser[seq[T]]" href="honeycomb.html#%2A%2CParser%5BT%5D%2Cint">honeycomb: `*`[T](a: Parser[T]; n: int): Parser[seq[T]]</a></li>
           <li><a class="reference external"
-          data-doc-search-tag="honeycomb: `*`[T](a: Parser[T]; n: Slice[int]): Parser[seq[T]]" href="honeycomb.html#%2A%2CParser%5BT%5D%2CSlice%5Bint%5D">honeycomb: `*`[T](a: Parser[T]; n: Slice[int]): Parser[seq[T]]</a></li>
+          data-doc-search-tag="honeycomb: `*`[T](p: Parser[T]; n: Slice[int]): Parser[seq[T]]" href="honeycomb.html#%2A.t%2CParser%5BT%5D%2CSlice%5Bint%5D">honeycomb: `*`[T](p: Parser[T]; n: Slice[int]): Parser[seq[T]]</a></li>
           </ul></dd>
 <dt><a name="%60%7C%60" href="#%60%7C%60"><span>`|`:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -173,6 +173,10 @@ window.addEventListener('DOMContentLoaded', main);
 <li><a class="reference external"
           data-doc-search-tag="ParseResultKind.failure" href="honeycomb.html#failure">ParseResultKind.failure</a></li>
           </ul></dd>
+<dt><a name="filter" href="#filter"><span>filter:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="honeycomb: filter[T](a: Parser[seq[T]]; fn: proc (x: T): bool): Parser[seq[T]]" href="honeycomb.html#filter%2CParser%5Bseq%5BT%5D%5D%2Cproc%28T%29">honeycomb: filter[T](a: Parser[seq[T]]; fn: proc (x: T): bool): Parser[seq[T]]</a></li>
+          </ul></dd>
 <dt><a name="flatten" href="#flatten"><span>flatten:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="honeycomb: flatten[T](p: Parser[seq[seq[T]]]): Parser[seq[T]]" href="honeycomb.html#flatten.t%2CParser%5Bseq%5Bseq%5BT%5D%5D%5D">honeycomb: flatten[T](p: Parser[seq[seq[T]]]): Parser[seq[T]]</a></li>
@@ -219,7 +223,11 @@ window.addEventListener('DOMContentLoaded', main);
           </ul></dd>
 <dt><a name="optional" href="#optional"><span>optional:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
-          data-doc-search-tag="honeycomb: optional[T](a: Parser[T]): Parser[seq[T]]" href="honeycomb.html#optional.t%2CParser%5BT%5D">honeycomb: optional[T](a: Parser[T]): Parser[seq[T]]</a></li>
+          data-doc-search-tag="honeycomb: optional[T](a: Parser[T]): Parser[T]" href="honeycomb.html#optional.t%2CParser%5BT%5D">honeycomb: optional[T](a: Parser[T]): Parser[T]</a></li>
+          </ul></dd>
+<dt><a name="orEmpty" href="#orEmpty"><span>orEmpty:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="honeycomb: orEmpty[T](a: Parser[T]): Parser[seq[T]]" href="honeycomb.html#orEmpty.t%2CParser%5BT%5D">honeycomb: orEmpty[T](a: Parser[T]): Parser[seq[T]]</a></li>
           </ul></dd>
 <dt><a name="parse" href="#parse"><span>parse:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -248,6 +256,10 @@ window.addEventListener('DOMContentLoaded', main);
 <dt><a name="regex" href="#regex"><span>regex:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="honeycomb: regex(expect: string): Parser[string]" href="honeycomb.html#regex%2Cstring">honeycomb: regex(expect: string): Parser[string]</a></li>
+          </ul></dd>
+<dt><a name="removeEmpty" href="#removeEmpty"><span>removeEmpty:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="honeycomb: removeEmpty[T](p: Parser[seq[seq[T]]]): Parser[seq[seq[T]]]" href="honeycomb.html#removeEmpty.t%2CParser%5Bseq%5Bseq%5BT%5D%5D%5D">honeycomb: removeEmpty[T](p: Parser[seq[seq[T]]]): Parser[seq[seq[T]]]</a></li>
           </ul></dd>
 <dt><a name="result" href="#result"><span>result:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -282,7 +294,7 @@ window.addEventListener('DOMContentLoaded', main);
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2021-12-29 08:59:19 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2021-12-30 23:28:52 UTC</small>
       </div>
     </div>
   </div>
