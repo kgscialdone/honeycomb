@@ -86,7 +86,7 @@ import sequtils
 import re
 import macros
 
-from sugar import `=>`
+from sugar import `=>`, `->`
 
 
 # === Core Types ===
@@ -415,6 +415,23 @@ func filter*[T](a: Parser[seq[T]], fn: proc(x: T): bool): Parser[seq[T]] =
   ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
   ## - [result](#result.t,Parser,T)
   a.mapEach((x: T) => (if fn(x): @[x] else: newSeq[T]())).flatten
+
+proc validate*[T](p: Parser[T]; cond: (T) -> bool; errorMessage: string = "Cannot parse"): Parser[T] =
+  ## Validate the result of a successful parse, i.e. cause it to fail if the result doesn't fulfill a condition
+  runnableExamples:
+    let
+      num = digit.atLeast(1).map(a => a.join().parseInt)
+      numSmallerThan500 = num.validate(a => a < 500)
+      negativeResult = numSmallerThan500.parse("874")
+      positiveResult = numSmallerThan500.parse("323")
+    assert negativeResult.kind == failure
+    assert positiveResult.kind == success
+  createParser(T):
+      let interimResult = p.parse(input)
+      if interimResult.kind == ParseResultKind.success and cond(interimResult.value):
+          return succeed(input, interimResult.value, interimResult.tail)
+      else:
+          return fail(input, @[errorMessage], input)
 
 func `|`*[T](a, b: Parser[T]): Parser[T] = 
   ## Succeeds if either parser succeeds, attempting them from left to right.
