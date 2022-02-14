@@ -297,7 +297,7 @@ func c*(expect: char): Parser[char] =
     if input.len > 0 and input[0] == expect: return succeed(input, expect, input[1..^1])
     fail(input, @["'$1'" % $expect], input)
 
-func c*(expect: string): Parser[char] = 
+func c*(expect: string | set): Parser[char] = 
   ## Creates a parser matching any one character from the given string.
   runnableExamples:
     let 
