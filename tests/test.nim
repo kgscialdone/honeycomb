@@ -63,6 +63,28 @@ suite "core parsers":
     check result3.tail      == "Ahoy there!"
     check result3.fromInput == "Ahoy there!"
 
+  test "character of set":
+    let 
+      parser  = c({'G', 'H'})
+      result1 = parser.parse("Hello, world!")
+      result2 = parser.parse("Greetings, peasants!")
+      result3 = parser.parse("Ahoy there!")
+
+    check result1.kind      == success
+    check result1.value     == 'H'
+    check result1.tail      == "ello, world!"
+    check result1.fromInput == "Hello, world!"
+
+    check result2.kind      == success
+    check result2.value     == 'G'
+    check result2.tail      == "reetings, peasants!"
+    check result2.fromInput == "Greetings, peasants!"
+
+    check result3.kind      == failure
+    check result3.error     == "[1:1] Expected character from '{'G', 'H'}'"
+    check result3.tail      == "Ahoy there!"
+    check result3.fromInput == "Ahoy there!"
+
   test "character of range":
     let 
       parser  = c('G'..'H')
