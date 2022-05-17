@@ -634,6 +634,23 @@ suite "general combinators":
     check result2.tail      == ""
     check result2.fromInput == "Hello Hello "
 
+  test "validate":
+    let
+      parser1 = digit.atLeast(3).map(a => a.join().parseInt)
+      parser2 = digit.atLeast(3).map(a => a.join().parseInt).validate(a => a < 500, "integer less than 500")
+      result1 = parser1.parse("345")
+      result2 = parser1.parse("678")
+      result3 = parser2.parse("345")
+      result4 = parser2.parse("678")
+    check result1.kind      == success
+    check result1.value     == 345
+    check result2.kind      == success
+    check result2.value     == 678
+    check result3.kind      == success
+    check result3.value     == 345
+    check result4.kind      == failure
+    check result4.error     == "[1:1] Expected integer less than 500"
+
   test "join delimited":
     let
       parser1 = (s("Hello") << whitespace).times(3).join(", ")

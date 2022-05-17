@@ -677,6 +677,13 @@ func desc*[T](a: Parser[T], description: string): Parser[T] =
     if result1.kind == failure: return fail(input, @[description], input)
     result1
 
+proc validate*[T](p: Parser[T]; cond: proc(a: T): bool; errorMessage: string = "Cannot parse"): Parser[T] =
+  createParser(T):
+    let interimResult = p.parse(input)
+    if interimResult.kind == ParseResultKind.success and cond(interimResult.value):
+      return succeed(input, interimResult.value, interimResult.tail)
+    else:
+      return fail(input, @[errorMessage], input)
 
 # === Textual Combinator Alternatives ===
 
