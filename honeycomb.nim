@@ -64,6 +64,7 @@ runnableExamples:
 ## - [desc](#desc,Parser[T],string) - set a custom description to be shown when a parser fails
 ## - [asSeq](#asSeq.t,Parser[T]) - wrap a parser's result in a `seq`
 ## - [asString](#asString.t,Parser) - convert a parser's result to a `string` via `$`
+## - [validate](#validate,Parser[T],proc(T),string) - validate a result, reject if it doesn't fulfill a given conditiom
 ##
 ## Execution and results
 ## =====================
@@ -678,6 +679,27 @@ func desc*[T](a: Parser[T], description: string): Parser[T] =
     result1
 
 proc validate*[T](p: Parser[T]; cond: proc(a: T): bool; errorMessage: string = "Cannot parse"): Parser[T] =
+  ## Validate the results of a successful parse with a given condition.
+  runnableExamples:
+    from sugar import `=>`
+    import strutils
+    let
+      parser1 = digit.atLeast(3).map(a => strutils.join(a).parseInt)
+      parser2 = digit.atLeast(3).map(a => strutils.join(a).parseInt).
+                  validate(a => a < 500, "integer less than 500")
+      result1 = parser1.parse("345")
+      result2 = parser1.parse("678")
+      result3 = parser2.parse("345")
+      result4 = parser2.parse("678")
+    assert result1.kind      == success
+    assert result1.value     == 345
+    assert result2.kind      == success
+    assert result2.value     == 678
+    assert result3.kind      == success
+    assert result3.value     == 345
+    assert result4.kind      == failure
+    assert result4.error     == "[1:1] Expected integer less than 500"
+
   createParser(T):
     let interimResult = p.parse(input)
     if interimResult.kind == ParseResultKind.success and cond(interimResult.value):
