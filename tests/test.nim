@@ -311,6 +311,23 @@ suite "general combinators":
     check result2.tail      == "Hello, world!"
     check result2.fromInput == "Hello, world!"
 
+  test "validate":
+    let
+      num = digit.atLeast(1).map(a => a.join().parseInt)
+      numSmallerThan500 = num.validate(a => a < 500, "number smaller than 500")
+      result1 = numSmallerThan500.parse("323")
+      result2 = numSmallerThan500.parse("874")
+
+    check result1.kind      == success
+    check result1.value     == 323
+    check result1.tail      == ""
+    check result1.fromInput == "323"
+
+    check result2.kind      == failure
+    check result2.error     == "[1:1] Expected number smaller than 500"
+    check result2.tail      == "874"
+    check result2.fromInput == "874"
+
   test "oneOf":
     let parsers = [
       s("Hello") | s("Greetings"),
