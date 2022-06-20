@@ -59,7 +59,7 @@ runnableExamples:
 ## - [mapEach](#mapEach.t,Parser[seq[T]],proc(T)) - run a custom function on each value of a successful parse containing a `seq`
 ## - [result](#result.t,Parser,T) - replace the value of a successful parse with a constant value
 ## - [filter](#filter,Parser[seq[T]],proc(T)) - filter the results of a successful parse by a predicate function
-## - [validate](#validate,Parser[T],proc(T)) - validate the result of a successful parse by a predicate function
+## - [validate](#validate,Parser[T],proc(T),string) - validate the result of a successful parse by a predicate function
 ## - [flatten](#flatten.t,Parser[seq[seq[T]]]) - remove a level of nested `seq`s from a parser
 ## - [removeEmpty](#removeEmpty.t,Parser[seq[seq[T]]]) - remove empty `seq`s from a parser resulting in nested `seqs`
 ## - [desc](#desc,Parser[T],string) - set a custom description to be shown when a parser fails
@@ -372,7 +372,7 @@ func map*[T,U](a: Parser[T], fn: proc(x: T): U): Parser[U] =
   ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
   ## - [result](#result.t,Parser,T)
   ## - [filter](#filter.t,Parser[seq[T]],proc(T))
-  ## - [validate](#validate,Parser[T],proc(T))
+  ## - [validate](#validate,Parser[T],proc(T),string)
   runnableExamples:
     from std/sugar import `=>`
     let
@@ -393,7 +393,7 @@ template mapEach*[T,U](a: Parser[seq[T]], fn: proc(x: T): U): Parser[seq[U]] =
   ## - [map](#map,Parser[T],proc(T))
   ## - [result](#result.t,Parser,T)
   ## - [filter](#filter.t,Parser[seq[T]],proc(T))
-  ## - [validate](#validate,Parser[T],proc(T))
+  ## - [validate](#validate,Parser[T],proc(T),string)
   runnableExamples:
     from std/strutils import toUpperAscii
     let
@@ -412,7 +412,7 @@ template result*[T](a: Parser, r: T): Parser[T] =
   ## - [map](#map,Parser[T],proc(T))
   ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
   ## - [filter](#filter.t,Parser[seq[T]],proc(T))
-  ## - [validate](#validate,Parser[T],proc(T))
+  ## - [validate](#validate,Parser[T],proc(T),string)
   runnableExamples:
     let
       parser = s("power level").result(9001)
@@ -430,7 +430,7 @@ func filter*[T](a: Parser[seq[T]], fn: proc(x: T): bool): Parser[seq[T]] =
   ## - [map](#map,Parser[T],proc(T))
   ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
   ## - [result](#result.t,Parser,T)
-  ## - [validate](#validate,Parser[T],proc(T))
+  ## - [validate](#validate,Parser[T],proc(T),string)
   a.mapEach((x: T) => (if fn(x): @[x] else: newSeq[T]())).flatten
 
 func validate*[T](p: Parser[T], fn: proc(x: T): bool, expected: string): Parser[T] =
@@ -442,13 +442,16 @@ func validate*[T](p: Parser[T], fn: proc(x: T): bool, expected: string): Parser[
   ## - [result](#result.t,Parser,T)
   ## - [filter](#filter.t,Parser[seq[T]],proc(T))
   runnableExamples:
+    from std/strutils import parseInt
+    from std/sugar import `=>`
     let
-      parser  = digit.atLeast(1).join.map(a => a.parseInt).validate(a => a < 500)
+      parser  = digit.atLeast(1).join.map(a => a.parseInt)
+        .validate(a => a < 500, "number less than 500")
       result1 = parser.parse("874")
       result2 = parser.parse("323")
 
-    assert negativeResult.kind == failure
-    assert positiveResult.kind == success
+    assert result1.kind == failure
+    assert result2.kind == success
 
   createParser(T):
     let result1 = p.parse(input)
