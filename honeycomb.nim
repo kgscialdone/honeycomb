@@ -84,8 +84,20 @@ runnableExamples:
 
 import strutils
 import sequtils
-import re
 import macros
+
+when defined(js):
+  import jsffi
+  import jsre as re
+  template re(s: string): RegExp = s.newRegExp
+  func findBounds(s: string, r: RegExp): (int, int) =
+    let m = s.match(r)
+    if m.toJs != nil:
+      let start = s.find($m[0])
+      return (start, start+m[0].len-1)
+    return (-1,0)
+else:
+  import re
 
 from sugar import `=>`, `->`
 

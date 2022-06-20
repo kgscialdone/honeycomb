@@ -12,3 +12,5 @@ jobs:
       - uses: iffy/install-nim@v4.1.1
       - run: nimble install -y
       - run: nimble test
+      - run: nimble testjs
+
