@@ -20,6 +20,7 @@ map	honeycomb.html#map,Parser[T],proc(T)	honeycomb: map[T, U](a: Parser[T]; fn: 
 mapEach	honeycomb.html#mapEach.t,Parser[seq[T]],proc(T)	honeycomb: mapEach[T, U](a: Parser[seq[T]]; fn: proc (x: T): U): Parser[seq[U]]	
 result	honeycomb.html#result.t,Parser,T	honeycomb: result[T](a: Parser; r: T): Parser[T]	
 filter	honeycomb.html#filter,Parser[seq[T]],proc(T)	honeycomb: filter[T](a: Parser[seq[T]]; fn: proc (x: T): bool): Parser[seq[T]]	
+validate	honeycomb.html#validate,Parser[T],proc(T),string	honeycomb: validate[T](p: Parser[T]; fn: proc (x: T): bool; expected: string): Parser[T]	
 `|`	honeycomb.html#|,Parser[T],Parser[T]	honeycomb: `|`[T](a, b: Parser[T]): Parser[T]	
 `&amp;`	honeycomb.html#&,Parser[seq[T]],Parser[seq[T]]	honeycomb: `&amp;`[T](a, b: Parser[seq[T]]): Parser[seq[T]]	
 `&amp;`	honeycomb.html#&.t,Parser[T],Parser[T]	honeycomb: `&amp;`[T](a, b: Parser[T]): Parser[seq[T]]	
