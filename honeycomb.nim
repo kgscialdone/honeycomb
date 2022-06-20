@@ -6,7 +6,7 @@
 ## Honeycomb was heavily inspired by the excellent Python library [parsy](https://github.com/python-parsy/parsy), as well as the existing but unmaintained [combparser](https://github.com/PMunch/combparser).
 
 runnableExamples:
-  let 
+  let
     parser  = ((s("Hello") | s("Greetings")) << c(',') << whitespace) & (regex(r"\w+") << c("!."))
     result1 = parser.parse("Hello, world!")
     result2 = parser.parse("Greetings, peasants.")
@@ -22,7 +22,7 @@ runnableExamples:
 ## - An extensive library of combinators with which to combine them
 ## - Support for manually defining custom parsers / combinators
 ## - Forward-declared parsers to support mutually recursive parser definitions
-## 
+##
 ## Key functions and types
 ## ***********************
 ##
@@ -56,9 +56,10 @@ runnableExamples:
 ## - [optional](#optional.t,Parser[T]) - expect a parser optionally, returning the default value of its result type if it doesn't match
 ## - [orEmpty](#orEmpty.t,Parser[T]) - expect a parser optionally, returning it in a `seq` or an empty `seq` if it doesn't match
 ## - [map](#map,Parser[T],proc(T)) - run a custom function on the value of a successful parse
-## - [mapEach](#mapEach,Parser[seq[T]],proc(T)) - run a custom function on each value of a successful parse containing a `seq`
+## - [mapEach](#mapEach.t,Parser[seq[T]],proc(T)) - run a custom function on each value of a successful parse containing a `seq`
 ## - [result](#result.t,Parser,T) - replace the value of a successful parse with a constant value
-## - [filter](#filter.t,Parser[seq[T]],proc(T)) - filter the results of a successful parse by a predicate function
+## - [filter](#filter,Parser[seq[T]],proc(T)) - filter the results of a successful parse by a predicate function
+## - [validate](#validate,Parser[T],proc(T),string) - validate the result of a successful parse by a predicate function
 ## - [flatten](#flatten.t,Parser[seq[seq[T]]]) - remove a level of nested `seq`s from a parser
 ## - [removeEmpty](#removeEmpty.t,Parser[seq[seq[T]]]) - remove empty `seq`s from a parser resulting in nested `seqs`
 ## - [desc](#desc,Parser[T],string) - set a custom description to be shown when a parser fails
@@ -83,10 +84,22 @@ runnableExamples:
 
 import strutils
 import sequtils
-import re
 import macros
 
-from sugar import `=>`
+when defined(js):
+  import jsffi
+  import jsre as re
+  template re(s: string): RegExp = s.newRegExp
+  func findBounds(s: string, r: RegExp): (int, int) =
+    let m = s.match(r)
+    if m.toJs != nil:
+      let start = s.find($m[0])
+      return (start, start+m[0].len-1)
+    return (-1,0)
+else:
+  import re
+
+from sugar import `=>`, `->`
 
 
 # === Core Types ===
@@ -123,7 +136,7 @@ type
 proc parse*[T](p: Parser[T], input: string): ParseResult[T] =
   ## Execute a parser on the given `input`.
   runnableExamples:
-    let 
+    let
       parser = s("Hello, world!")
       result = parser.parse("Hello, world!")
 
@@ -139,7 +152,7 @@ func lineInfo*(result1: ParseResult): (int,int) =
   ## See also:
   ## - [error](#error,ParseResult,bool)
   ## - [raiseIfFailed](#raiseIfFailed.t,ParseResult)
-  let 
+  let
     prior   = result1.fromInput[0..^result1.tail.len+1]
     lineNum = prior.countLines
     lines   = prior.splitLines
@@ -155,7 +168,7 @@ func error*(result1: ParseResult, showPos: bool = true): string =
   ## - [raiseIfFailed](#raiseIfFailed.t,ParseResult)
   ## - [lineInfo](#lineInfo,ParseResult)
   runnableExamples:
-    let 
+    let
       parser = s("Hello, world!")
       result = parser.parse("Greetings, peasants!")
 
@@ -163,7 +176,7 @@ func error*(result1: ParseResult, showPos: bool = true): string =
     assert result.error == "[1:1] Expected 'Hello, world!'"
 
   if result1.kind == success: return ""
-  let 
+  let
     expected   = result1.expected.deduplicate
     (line,col) = result1.lineInfo
     posStr     = (if showPos: "[$1:$2] " % [$line, $col] else: "")
@@ -178,7 +191,7 @@ template raiseIfFailed*(result1: ParseResult) =
   ## - [error](#error,ParseResult,bool)
   ## - [lineInfo](#lineInfo,ParseResult)
   runnableExamples:
-    let 
+    let
       parser = s("Hello, world!")
       result = parser.parse("Greetings, peasants!")
 
@@ -196,13 +209,13 @@ template createParser*(T: typedesc, parser_body: untyped): Parser[T] =
   ## Convenience method for creating a custom `Parser`. Expects the parser's result type as a parameter (not a generic!) and a block which will form the body of the parser.
   ##
   ## Inside the given block, the following bindings are exposed:
-  ## - | `let input: string` 
+  ## - | `let input: string`
   ##   | The input string to be parsed.
   ## - | `func succeed(input: string, value: T, tail: string)`
   ##   | Creates a successful `ParseResult` with the given `value`.
   ## - | `func fail(input: string, expected: seq[string], tail: string)`
   ##   | Creates a failed `ParseResult` with the given `expected`.
-  ## 
+  ##
   ## The block should return a `ParseResult` created by either `succeed` or `fail`, with the tail consisting of the remaining unparsed input. If the parser failed, the tail should almost always be the entire input; this should only not be the case when a combinator needs to partially consume the input, for example the [&](#&,Parser[seq[T]],Parser[seq[T]]) operator.
   runnableExamples:
     # This is just a contrived example; for this exact interaction,
@@ -243,7 +256,7 @@ macro applyParser*(parser, input, T: untyped) =
         {.pop.}
         return succeed(input, @[result1.value, result2.value], result2.tail)
 
-    let 
+    let
       parser = sequence(s("Hello, "), s("world!"))
       result = parser.parse("Hello, world!")
 
@@ -261,14 +274,14 @@ macro applyParser*(parser, input, T: untyped) =
 
 # === Core Parsers ===
 
-func s*(expect: string): Parser[string] = 
+func s*(expect: string): Parser[string] =
   ## Creates a parser matching exactly the given string.
   ##
   ## See also:
   ## - [c](#c,char)
   ## - [regex](#regex,string)
   runnableExamples:
-    let 
+    let
       parser = s("Hello, world!")
       result = parser.parse("Hello, world!")
 
@@ -279,14 +292,14 @@ func s*(expect: string): Parser[string] =
     if input.startsWith(expect): return succeed(input, expect, input[expect.len..^1])
     fail(input, @["'$1'" % expect], input)
 
-func c*(expect: char): Parser[char] = 
+func c*(expect: char): Parser[char] =
   ## Creates a parser matching exactly the given character.
   ##
   ## See also:
   ## - [s](#s,string)
   ## - [regex](#regex,string)
   runnableExamples:
-    let 
+    let
       parser = c('H')
       result = parser.parse("Hello, world!")
 
@@ -297,10 +310,10 @@ func c*(expect: char): Parser[char] =
     if input.len > 0 and input[0] == expect: return succeed(input, expect, input[1..^1])
     fail(input, @["'$1'" % $expect], input)
 
-func c*(expect: string): Parser[char] = 
+func c*(expect: string): Parser[char] =
   ## Creates a parser matching any one character from the given string.
   runnableExamples:
-    let 
+    let
       parser = c("HIJK")
       result = parser.parse("Hello, world!")
 
@@ -311,10 +324,10 @@ func c*(expect: string): Parser[char] =
     if input.len > 0 and input[0] in expect: return succeed(input, input[0], input[1..^1])
     fail(input, @["character from '$1'" % $expect], input)
 
-func c*(expect: Slice[char]): Parser[char] = 
+func c*(expect: Slice[char]): Parser[char] =
   ## Creates a parser matching any one character from the given range.
   runnableExamples:
-    let 
+    let
       parser = c('H'..'K')
       result = parser.parse("Hello, world!")
 
@@ -325,14 +338,14 @@ func c*(expect: Slice[char]): Parser[char] =
     if input.len > 0 and input[0] in expect: return succeed(input, input[0], input[1..^1])
     fail(input, @["character from $1..$2" % [$expect.a, $expect.b]], input)
 
-func regex*(expect: string): Parser[string] = 
+func regex*(expect: string): Parser[string] =
   ## Creates a parser matching the given regex. The regex must match from the start of the input.
   ##
   ## See also:
   ## - [s](#s,string)
   ## - [c](#c,char)
   runnableExamples:
-    let 
+    let
       parser = regex(r"\w+, \w+!")
       result = parser.parse("Hello, world!")
 
@@ -352,16 +365,17 @@ func nop*[T](): Parser[T] =
 
 # === Combinators ===
 
-func map*[T,U](a: Parser[T], fn: proc(x: T): U): Parser[U] = 
+func map*[T,U](a: Parser[T], fn: proc(x: T): U): Parser[U] =
   ## If the parser is successful, calls `fn` on the parsed value and succeeds with its return value.
   ##
   ## See also:
   ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
   ## - [result](#result.t,Parser,T)
   ## - [filter](#filter.t,Parser[seq[T]],proc(T))
+  ## - [validate](#validate,Parser[T],proc(T),string)
   runnableExamples:
     from std/sugar import `=>`
-    let 
+    let
       parser = (s("Hello, ") & s("world!")).map(x => (x[0], x[1]))
       result = parser.parse("Hello, world!")
 
@@ -379,9 +393,10 @@ template mapEach*[T,U](a: Parser[seq[T]], fn: proc(x: T): U): Parser[seq[U]] =
   ## - [map](#map,Parser[T],proc(T))
   ## - [result](#result.t,Parser,T)
   ## - [filter](#filter.t,Parser[seq[T]],proc(T))
+  ## - [validate](#validate,Parser[T],proc(T),string)
   runnableExamples:
     from std/strutils import toUpperAscii
-    let 
+    let
       parser = (s("Hello, ") & s("world!")).mapEach(toUpperAscii)
       result = parser.parse("Hello, world!")
 
@@ -390,15 +405,16 @@ template mapEach*[T,U](a: Parser[seq[T]], fn: proc(x: T): U): Parser[seq[U]] =
 
   a.map(x => x.map(fn))
 
-template result*[T](a: Parser, r: T): Parser[T] = 
+template result*[T](a: Parser, r: T): Parser[T] =
   ## If the parser is successful, succeeds with the given `r` as value.
   ##
   ## See also:
   ## - [map](#map,Parser[T],proc(T))
   ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
   ## - [filter](#filter.t,Parser[seq[T]],proc(T))
+  ## - [validate](#validate,Parser[T],proc(T),string)
   runnableExamples:
-    let 
+    let
       parser = s("power level").result(9001)
       result = parser.parse("power level")
 
@@ -414,15 +430,44 @@ func filter*[T](a: Parser[seq[T]], fn: proc(x: T): bool): Parser[seq[T]] =
   ## - [map](#map,Parser[T],proc(T))
   ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
   ## - [result](#result.t,Parser,T)
+  ## - [validate](#validate,Parser[T],proc(T),string)
   a.mapEach((x: T) => (if fn(x): @[x] else: newSeq[T]())).flatten
 
-func `|`*[T](a, b: Parser[T]): Parser[T] = 
+func validate*[T](p: Parser[T], fn: proc(x: T): bool, expected: string): Parser[T] =
+  ## Validate the result of a successful parse by the given predicate, failing if it returns `false`.
+  ##
+  ## See also:
+  ## - [map](#map,Parser[T],proc(T))
+  ## - [mapEach](#mapEach,Parser[seq[T]],proc(T))
+  ## - [result](#result.t,Parser,T)
+  ## - [filter](#filter.t,Parser[seq[T]],proc(T))
+  runnableExamples:
+    from std/strutils import parseInt
+    from std/sugar import `=>`
+    let
+      parser  = digit.atLeast(1).join.map(a => a.parseInt)
+        .validate(a => a < 500, "number less than 500")
+      result1 = parser.parse("874")
+      result2 = parser.parse("323")
+
+    assert result1.kind == failure
+    assert result2.kind == success
+
+  createParser(T):
+    let result1 = p.parse(input)
+    case result1.kind
+    of ParseResultKind.failure: return result1
+    of ParseResultKind.success:
+      if fn(result1.value): return result1
+      return fail(input, @[expected], input)
+
+func `|`*[T](a, b: Parser[T]): Parser[T] =
   ## Succeeds if either parser succeeds, attempting them from left to right.
-  ## 
+  ##
   ## See also:
   ## - [oneOf](#oneOf.t,Parser[T],Parser[T],varargs[Parser[T]]) - textual equivalent to this operator
   runnableExamples:
-    let 
+    let
       parser  = s("Hello") | s("Greetings")
       result1 = parser.parse("Hello, world!")
       result2 = parser.parse("Greetings, peasants!")
@@ -441,11 +486,11 @@ func `|`*[T](a, b: Parser[T]): Parser[T] =
 
 func `&`*[T](a, b: Parser[seq[T]]): Parser[seq[T]] =
   ## Expects each parser in sequence from left to right, creating a `seq` of their results. If one or both of the parsers already results in a `seq` of the other's type, the two `seq`s will be merged.
-  ## 
+  ##
   ## See also:
   ## - [chain](#chain.t,Parser[T],Parser[T],varargs[Parser[T]]) - textual equivalent to this operator
   runnableExamples:
-    let 
+    let
       parser = s("Hello, ") & s("world!")
       result = parser.parse("Hello, world!")
 
@@ -476,7 +521,7 @@ func `<<`*[T](a: Parser[T], b: Parser): Parser[T] =
   ## - [skip](#skip.t,Parser,Parser) - textual equivalent to this operator
   ## - [>>](#>>,Parser[T],Parser) / [then](#then.t,Parser,Parser)
   runnableExamples:
-    let 
+    let
       parser = s("Hello, ") << s("world!")
       result = parser.parse("Hello, world!")
 
@@ -495,7 +540,7 @@ func `>>`*[T](a: Parser, b: Parser[T]): Parser[T] =
   ## - [then](#then.t,Parser,Parser) - textual equivalent to this operator
   ## - [<<](#<<,Parser[T],Parser) / [skip](#skip.t,Parser,Parser)
   runnableExamples:
-    let 
+    let
       parser = s("Hello, ") >> s("world!")
       result = parser.parse("Hello, world!")
 
@@ -519,7 +564,7 @@ func `*`*[T](a: Parser[T], n: int): Parser[seq[T]] =
   ## - [atMost](#atMost.t,Parser[T],int)
   ## - [optional](#optional.t,Parser[T])
   runnableExamples:
-    let 
+    let
       parser = s("Hello ") * 3
       result = parser.parse("Hello Hello Hello ")
 
@@ -529,9 +574,9 @@ func `*`*[T](a: Parser[T], n: int): Parser[seq[T]] =
   case n:
     of 0: return nop[seq[T]]()
     of 1: return a.asSeq
-    else: 
+    else:
       createParser(seq[T]):
-        var 
+        var
           result1  = applyParser(a, input, seq[T])
           outputs  = @[result1.value]
           lastTail = result1.tail
@@ -568,7 +613,7 @@ func `!`*[T](a: Parser[T]): Parser[T] =
       of success: return fail(input, @["successful negative lookahead"], input)
       of failure: return succeed(input, default(T), input)
 
-template atLeast*[T](a: Parser[T], n: int): Parser[seq[T]] = 
+template atLeast*[T](a: Parser[T], n: int): Parser[seq[T]] =
   ## Expects the parser `n` or more times, returning a `seq` of the matches.
   ##
   ## See also:
@@ -578,7 +623,7 @@ template atLeast*[T](a: Parser[T], n: int): Parser[seq[T]] =
   ## - [optional](#optional.t,Parser[T])
   a.times(n..high(int))
 
-template atMost*[T](a: Parser[T], n: int): Parser[seq[T]] = 
+template atMost*[T](a: Parser[T], n: int): Parser[seq[T]] =
   ## Expects the parser `n` or fewer times, returning a `seq` of the matches.
   ##
   ## See also:
@@ -642,7 +687,7 @@ template removeEmpty*[T](p: Parser[seq[seq[T]]]): Parser[seq[seq[T]]] =
 
   p.filter(x => x.len > 0)
 
-template join*(a: Parser[seq[string or char]], delim: string or char = ""): Parser[string] = 
+template join*(a: Parser[seq[string or char]], delim: string or char = ""): Parser[string] =
   ## Joins a `seq[string]` parser into a single string, using the given delimiter.
   runnableExamples:
     let
@@ -654,7 +699,7 @@ template join*(a: Parser[seq[string or char]], delim: string or char = ""): Pars
 
   a.map(x => x.join($delim))
 
-template asString*(a: Parser): Parser[string] = 
+template asString*(a: Parser): Parser[string] =
   ## Converts a parser to a `string` parser via `$`.
   a.map(`$`)
 
@@ -690,8 +735,8 @@ template chain*[T](p1, p2: Parser[T], ps: varargs[Parser[T]]): Parser[seq[T]] =
   var outp = p1 & p2
   for p in ps: outp = outp & p
   outp
-  
-template oneOf*[T](p1, p2: Parser[T], ps: varargs[Parser[T]]): Parser[T] = 
+
+template oneOf*[T](p1, p2: Parser[T], ps: varargs[Parser[T]]): Parser[T] =
   ## Textual alternative to [|](#|,Parser[T],Parser[T]). Accepts more than two parsers for convenience, attempting them in order.
   var outp = p1 | p2
   for p in ps: outp = outp | p
@@ -700,8 +745,8 @@ template oneOf*[T](p1, p2: Parser[T], ps: varargs[Parser[T]]): Parser[T] =
 
 # === Forward Declarations ===
 
-template fwdcl*[T](): var Parser[T] = 
-  ## Create a forward-declared parser. 
+template fwdcl*[T](): var Parser[T] =
+  ## Create a forward-declared parser.
   ##
   ## A forward-declared parser can be used normally, but must be initialized with [become](#become.t,Parser[T],Parser[T]) before you can call [parse](#parse,Parser[T],string) on it. A variable containing a forward-declared parser must be declared with `var` for `become` to function.
   ##
@@ -720,22 +765,22 @@ template fwdcl*[T](): var Parser[T] =
 
   Parser[T](body: nil)
 
-template become*[T](a: var Parser[T], b: Parser[T]) = 
+template become*[T](a: var Parser[T], b: Parser[T]) =
   ## Initialize a forward-declared parser created with [fwdcl](#fwdcl.t), after which it can be used.
   a.body = b.body
 
 
 # === Converters ===
 
-converter asString*(a: Parser[char]): Parser[string] = 
+converter asString*(a: Parser[char]): Parser[string] =
   ## Implicitly converts `char` parsers to `string` parsers for ease of use.
   a.map(x => $x)
 
 
 # === Predefined Parsers ===
 
-let 
-  eofImpl = createParser(string):   
+let
+  eofImpl = createParser(string):
     if input.len > 0: return fail(input, @["EOF"], input)
     succeed(input, "", "")
 
@@ -743,10 +788,11 @@ let
     if input.len > 0: return succeed(input, input[0], input[1..^1])
     fail(input, @["any character"], input)
 
-let 
+let
   eof*          = eofImpl                     ## A parser that fails if there is any remaining input.
   anyChar*      = anyCharImpl                 ## A parser that succeeds for one character of any non-empty input.
   whitespace*   = regex(r"\s+")               ## A parser that expects at least one whitespace character.
   letter*       = c('a'..'z') | c('A'..'Z')   ## A parser that expects one ASCII alphabetical character.
   digit*        = c('0'..'9')                 ## A parser that expects one ASCII digit character.
   alphanumeric* = letter | digit              ## A parser that expects one ASCII alphanumeric character.
+
