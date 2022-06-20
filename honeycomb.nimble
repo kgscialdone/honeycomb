@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.1"
+version       = "0.1.2"
 author        = "Katrina Scialdone"
 description   = "A dead simple, no-nonsense parser combinator library written in pure Nim."
 license       = "MPL-2.0"
